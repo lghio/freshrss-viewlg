@@ -267,8 +267,74 @@ body.cv-three-panes .cv-loading {
 .cv-ui-themes { display: flex; align-items: center; gap: .5em; flex-wrap: wrap; margin: .5em 0 .75em; }
 
 /* -----------------------------------------------------------------------------
-   LIST PANE – date below title (no right-aligned date column)
+   LIST PANE – compact row layout
+   Row 1 : [read][fav]  [title … wrapping]
+   Row 2 : [website name]  [date]  [labels]  [link]
    ----------------------------------------------------------------------------- */
+
+/* Enable wrap so row 2 meta items flow below the title */
+body.cv-three-panes #stream .flux .flux_header.horizontal-list {
+	flex-wrap: wrap;
+	align-items: flex-start;
+}
+
+/* Row 1 – keep manage buttons and thumbnail on first line */
+body.cv-three-panes #stream .flux .flux_header > li.item.manage,
+body.cv-three-panes #stream .flux .flux_header > li.item.thumbnail {
+	order: 1;
+}
+
+/* Row 1 – title cell fills remaining space */
+body.cv-three-panes #stream .flux .flux_header > li.item.titleAuthorSummaryDate {
+	order: 2;
+	flex: 1 1 0;
+	min-width: 0;
+	overflow: visible;
+}
+
+/* Zero-height flex line-break after the title row */
+body.cv-three-panes #stream .flux .flux_header::after {
+	content: '';
+	order: 3;
+	flex: 0 0 100%;
+	height: 0;
+}
+
+/* Row 2 – meta items: website · date · labels · link */
+body.cv-three-panes #stream .flux .flux_header > li.item.website,
+body.cv-three-panes #stream .flux .flux_header > li.item.labels,
+body.cv-three-panes #stream .flux .flux_header > li.item.share,
+body.cv-three-panes #stream .flux .flux_header > li.item.link {
+	order: 4;
+	align-self: center;
+}
+
+/* Website: shrink to auto width, small text */
+body.cv-three-panes #stream .flux .flux_header > li.item.website {
+	width: auto !important;
+}
+body.cv-three-panes #stream .flux .flux_header > li.item.website .item-element {
+	font-size: 0.7rem;
+	padding-top: 0.1rem;
+	padding-bottom: 0.1rem;
+	display: inline-flex;
+	align-items: center;
+	gap: 0.25rem;
+}
+body.cv-three-panes #stream .flux .flux_header > li.item.website .favicon {
+	width: 12px;
+	height: 12px;
+}
+
+/* Labels and link: reduced vertical padding */
+body.cv-three-panes #stream .flux .flux_header > li.item.labels .item-element,
+body.cv-three-panes #stream .flux .flux_header > li.item.share .dropdown-toggle,
+body.cv-three-panes #stream .flux .flux_header > li.item.link .item-element {
+	padding-top: 0.1rem;
+	padding-bottom: 0.1rem;
+}
+
+/* Title: static block (wrapping) */
 body.cv-three-panes #stream .flux .flux_header .item .title,
 body.cv-three-panes #stream .flux .flux_header .item .title:has(~ .date) {
 	position: static !important;
@@ -281,9 +347,10 @@ body.cv-three-panes #stream .flux .flux_header .item .title:has(~ .date) {
 	text-overflow: unset !important;
 }
 
+/* Date: static inline-block, sits beside website name on row 2 */
 body.cv-three-panes #stream .flux .flux_header .item .date {
 	position: static !important;
-	display: block !important;
+	display: inline-block !important;
 	width: auto !important;
 	text-align: left !important;
 	font-size: 0.7rem;
