@@ -275,8 +275,16 @@ body.cv-three-panes .cv-loading {
 
 /* Enable wrap so meta items flow below the title */
 body.cv-three-panes #stream .flux .flux_header.horizontal-list {
+	display: flex !important;
 	flex-wrap: wrap;
 	align-items: flex-start;
+	table-layout: unset;
+	width: 100%;
+}
+
+body.cv-three-panes #stream .flux .flux_header.horizontal-list > li.item {
+	display: block !important;
+	vertical-align: unset;
 }
 
 /* Row 1 – keep manage buttons and thumbnail on first line */
