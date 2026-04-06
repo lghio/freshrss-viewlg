@@ -9,7 +9,7 @@ services:
       # Persistent data (config, database, cache)
       - freshrss_data:/var/www/FreshRSS/data
       # Mount the extension directly from the workspace – live reload on save
-      - ./xExtension-CustomView:/var/www/FreshRSS/extensions/xExtension-CustomView
+      - ./xExtension-ViewLG:/var/www/FreshRSS/extensions/xExtension-ViewLG
     environment:
       TZ: Europe/Paris
       CRON_MIN: "*/15"
