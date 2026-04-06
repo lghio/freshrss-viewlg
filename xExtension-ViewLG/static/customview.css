@@ -268,12 +268,17 @@ body.cv-three-panes .cv-loading {
 
 /* -----------------------------------------------------------------------------
    LIST PANE – compact row layout
-   Row 1 : [read][fav]  [title … wrapping]
-   Row 2 : [website name]   (full width, own line)
+   Row 1 : [read][fav] [thumbnail]  [title … wrapping]
+                                    [summary … wrapping]   (if enabled)
+   Row 2 : [website name — full width]
    Row 3 : [date]  [labels]  [link]
+
+   Key technique: li.titleAuthorSummaryDate uses display:contents so its
+   children (a.title, div.summary, span.date) become direct flex items and
+   can be independently ordered after li.website.
    ----------------------------------------------------------------------------- */
 
-/* Enable wrap so meta items flow below the title */
+/* Flex container */
 body.cv-three-panes #stream .flux .flux_header.horizontal-list {
 	display: flex !important;
 	flex-wrap: wrap;
@@ -282,26 +287,47 @@ body.cv-three-panes #stream .flux .flux_header.horizontal-list {
 	width: 100%;
 }
 
+/* Reset table-cell on all li children */
 body.cv-three-panes #stream .flux .flux_header.horizontal-list > li.item {
 	display: block !important;
 	vertical-align: unset;
 }
 
-/* Row 1 – keep manage buttons and thumbnail on first line */
+/* Row 1 – manage buttons and thumbnail */
 body.cv-three-panes #stream .flux .flux_header > li.item.manage,
 body.cv-three-panes #stream .flux .flux_header > li.item.thumbnail {
 	order: 1;
 }
 
-/* Row 1 – title cell fills remaining space */
+/* "Dissolve" titleAuthorSummaryDate so its children become direct flex items */
 body.cv-three-panes #stream .flux .flux_header > li.item.titleAuthorSummaryDate {
+	display: contents !important;
+}
+
+/* Row 1 – title: grows to fill remaining space on title row */
+body.cv-three-panes #stream .flux .flux_header a.item-element.title {
 	order: 2;
 	flex: 1 1 0;
 	min-width: 0;
-	overflow: visible;
+	position: static !important;
+	display: block !important;
+	max-width: 100% !important;
+	padding-right: 0 !important;
+	white-space: normal !important;
+	overflow: visible !important;
+	text-overflow: unset !important;
+	color: var(--frss-font-color-dark);
+	text-decoration: none;
 }
 
-/* Zero-height flex line-break after the title row */
+/* Row 1 – summary (if shown): own full-width line after title */
+body.cv-three-panes #stream .flux .flux_header .summary {
+	order: 2;
+	flex: 0 0 100%;
+	margin-top: 0 !important;
+}
+
+/* Zero-height line-break between row 1 and row 2 */
 body.cv-three-panes #stream .flux .flux_header::after {
 	content: '';
 	order: 3;
@@ -309,7 +335,7 @@ body.cv-three-panes #stream .flux .flux_header::after {
 	height: 0;
 }
 
-/* Row 2 – website name takes full width (own line) */
+/* Row 2 – website name: full width, own line */
 body.cv-three-panes #stream .flux .flux_header > li.item.website {
 	order: 4;
 	flex: 0 0 100%;
@@ -328,7 +354,19 @@ body.cv-three-panes #stream .flux .flux_header > li.item.website .favicon {
 	height: 12px;
 }
 
-/* Row 3 – date · labels · link on the same line */
+/* Row 3 – date: now a direct flex item (parent has display:contents) */
+body.cv-three-panes #stream .flux .flux_header span.item-element.date {
+	order: 5;
+	position: static !important;
+	width: auto !important;
+	text-align: left !important;
+	font-size: 0.7rem;
+	opacity: .75;
+	align-self: center;
+	padding: 0.1rem var(--frss-padding-flux-items) 0.1rem 0;
+}
+
+/* Row 3 – labels and link: same order as date */
 body.cv-three-panes #stream .flux .flux_header > li.item.labels,
 body.cv-three-panes #stream .flux .flux_header > li.item.share,
 body.cv-three-panes #stream .flux .flux_header > li.item.link {
@@ -336,40 +374,9 @@ body.cv-three-panes #stream .flux .flux_header > li.item.link {
 	align-self: center;
 }
 
-/* Labels and link: reduced vertical padding */
 body.cv-three-panes #stream .flux .flux_header > li.item.labels .item-element,
 body.cv-three-panes #stream .flux .flux_header > li.item.share .dropdown-toggle,
 body.cv-three-panes #stream .flux .flux_header > li.item.link .item-element {
 	padding-top: 0.1rem;
 	padding-bottom: 0.1rem;
-}
-
-/* Title: static block (wrapping) */
-body.cv-three-panes #stream .flux .flux_header .item .title,
-body.cv-three-panes #stream .flux .flux_header .item .title:has(~ .date) {
-	position: static !important;
-	display: block !important;
-	max-width: 100% !important;
-	min-width: 0 !important;
-	padding-right: 0 !important;
-	white-space: normal !important;
-	overflow: visible !important;
-	text-overflow: unset !important;
-}
-
-/* Date: static inline-block on row 3, before labels and link */
-body.cv-three-panes #stream .flux .flux_header .item .date {
-	position: static !important;
-	display: inline-block !important;
-	width: auto !important;
-	text-align: left !important;
-	font-size: 0.7rem;
-	opacity: .75;
-}
-
-/* date is inside titleAuthorSummaryDate (order 2), push it to row 3 visually
-   by keeping it inline after the title block – no extra reorder needed */
-
-body.cv-three-panes #stream .flux .flux_header .item .summary {
-	margin-top: 0 !important;
 }
