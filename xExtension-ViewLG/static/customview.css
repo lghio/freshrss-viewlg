@@ -265,3 +265,31 @@ body.cv-three-panes .cv-loading {
 	font-style: italic;
 }
 .cv-ui-themes { display: flex; align-items: center; gap: .5em; flex-wrap: wrap; margin: .5em 0 .75em; }
+
+/* -----------------------------------------------------------------------------
+   LIST PANE – date below title (no right-aligned date column)
+   ----------------------------------------------------------------------------- */
+body.cv-three-panes #stream .flux .flux_header .item .title,
+body.cv-three-panes #stream .flux .flux_header .item .title:has(~ .date) {
+	position: static !important;
+	display: block !important;
+	max-width: 100% !important;
+	min-width: 0 !important;
+	padding-right: 0 !important;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+body.cv-three-panes #stream .flux .flux_header .item .date {
+	position: static !important;
+	display: block !important;
+	width: auto !important;
+	text-align: left !important;
+	font-size: 0.7rem;
+	opacity: .75;
+}
+
+body.cv-three-panes #stream .flux .flux_header .item .summary {
+	margin-top: 0 !important;
+}
