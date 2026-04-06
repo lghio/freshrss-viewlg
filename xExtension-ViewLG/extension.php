@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-final class CustomViewExtension extends Minz_Extension
+final class ViewLGExtension extends Minz_Extension
 {
 	#[\Override]
 	public function init(): void
@@ -165,7 +165,7 @@ final class CustomViewExtension extends Minz_Extension
 	private function generateColorCss(array $c): string
 	{
 		$hexRe = '/^#[0-9a-fA-F]{6}$/';
-		$css   = "/* CustomView generated colors – do not edit */\n";
+		$css   = "/* ViewLG generated colors – do not edit */\n";
 
 		if (!empty($c['list_bg']) && preg_match($hexRe, $c['list_bg'])) {
 			$css .= 'body.cv-three-panes #stream{background-color:' . $c['list_bg'] . "!important}\n";

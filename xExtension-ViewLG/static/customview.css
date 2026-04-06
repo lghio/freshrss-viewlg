@@ -1,5 +1,5 @@
 /* =============================================================================
-   CustomView FreshRSS Extension
+   ViewLG FreshRSS Extension
    Combines ThreePanesView layout + per-feed article highlight colors
    ============================================================================= */
 
@@ -222,7 +222,7 @@
    Loaded here (external CSS, CSP-safe) instead of inline in configure.phtml.
    ----------------------------------------------------------------------------- */
 
-/* Widen the FreshRSS settings slider when CustomView config is open */
+/* Widen the FreshRSS settings slider when ViewLG config is open */
 #slider.active:target {
 	width: min(1100px, 95vw) !important;
 }

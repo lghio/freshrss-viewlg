@@ -1,6 +1,6 @@
 <?php
 declare(strict_types=1);
-/** @var CustomViewExtension $this */
+/** @var ViewLGExtension $this */
 
 $feeds           = isset($_SESSION['cv_feeds']) ? $_SESSION['cv_feeds'] : $this->getFeeds();
 $feedColors      = $this->getFeedColors();
@@ -26,7 +26,7 @@ $uiColorMeta     = [
       method="post">
 	<input type="hidden" name="_csrf" value="<?php echo FreshRSS_Auth::csrfToken(); ?>" />
 
-	<h2>CustomView</h2>
+	<h2>ViewLG</h2>
 
 	<!-- ================================================================
 	     SECTION 1 – LAYOUT

@@ -1,5 +1,5 @@
 /**
- * CustomView FreshRSS Extension
+ * ViewLG FreshRSS Extension
  *
  * Combines:
  *   1. ThreePanesView – side-by-side article list + article content panes

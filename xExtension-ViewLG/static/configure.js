@@ -1,5 +1,5 @@
 /**
- * CustomView Extension – Configure page script.
+ * ViewLG Extension – Configure page script.
  *
  * Loaded in the main page <head> via extension.php so it is always trusted
  * ('self') and not affected by FreshRSS's CSP.  The configure form itself is
