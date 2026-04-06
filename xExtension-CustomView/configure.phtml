@@ -1,0 +1,228 @@
+<?php
+declare(strict_types=1);
+/** @var CustomViewExtension $this */
+
+$feeds           = isset($_SESSION['cv_feeds']) ? $_SESSION['cv_feeds'] : $this->getFeeds();
+$feedColors      = $this->getFeedColors();
+$threePanes      = $this->isThreePanesEnabled();
+$defaultReaderMode = $this->getUserConfigurationValue('default_reader_mode', 'summary');
+$uiColors        = $this->getUiColors();
+$uiColorMeta     = [
+	'list_bg'              => ['label' => 'Fond du panneau liste',          'default' => '#fafafa'],
+	'list_item_hover'      => ['label' => "Survol d'article (fond)",        'default' => '#f0f0f0'],
+	'list_item_hover_text' => ['label' => "Survol d'article (texte)",       'default' => '#222222'],
+	'list_hover_title_bg'  => ['label' => "Survol d'article – titre (fond)",  'default' => '#f0f0f0'],
+	'list_hover_title_text'=> ['label' => "Survol d'article – titre (texte)", 'default' => '#111111'],
+	'list_item_selected'   => ['label' => 'Article sélectionné',             'default' => '#dceeff'],
+	'content_bg'         => ['label' => 'Fond du panneau contenu', 'default' => '#ffffff'],
+	'content_text'       => ['label' => 'Texte du contenu',        'default' => '#222222'],
+	'border'             => ['label' => 'Bordures / séparateurs',  'default' => '#dddddd'],
+	'splitter'           => ['label' => 'Barre de séparation',     'default' => '#999999'],
+];
+?>
+<div class="cv-settings">
+
+<form action="<?php echo _url('extension', 'configure', 'e', urlencode($this->getName())); ?>"
+      method="post">
+	<input type="hidden" name="_csrf" value="<?php echo FreshRSS_Auth::csrfToken(); ?>" />
+
+	<h2>CustomView</h2>
+
+	<!-- ================================================================
+	     SECTION 1 – LAYOUT
+	     ================================================================ -->
+	<section class="cv-section">
+		<h3>Disposition</h3>
+
+		<label class="cv-row-label" for="cv_three_panes_enabled">
+			<input type="checkbox"
+			       id="cv_three_panes_enabled"
+			       name="cv_three_panes_enabled"
+			       value="1"
+			       <?php echo $threePanes ? 'checked="checked"' : ''; ?>>
+			Activer la vue à trois panneaux
+		</label>
+		<p class="cv-help">
+			Affiche le contenu de l'article dans un panneau latéral plutôt qu'en plein écran.
+			Requiert une largeur d'écran d'au moins 800 px.
+			Remplace l'extension ThreePanesView.
+		</p>
+
+		<label class="cv-row-label" style="margin-top:.75em">
+			Mode de lecture par défaut :
+			<select name="cv_default_reader_mode" id="cv_default_reader_mode">
+				<option value="summary"  <?php echo $defaultReaderMode !== 'full' ? 'selected' : ''; ?>>Résumé (contenu RSS)</option>
+				<option value="full"     <?php echo $defaultReaderMode === 'full'  ? 'selected' : ''; ?>>Entier (page originale)</option>
+			</select>
+		</label>
+		<p class="cv-help">Détermine si le panneau droit affiche le résumé RSS ou charge directement la page originale dans un iframe.</p>
+	</section>
+
+	<!-- ================================================================
+	     SECTION 2 – HIGHLIGHT COLORS
+	     ================================================================ -->
+	<section class="cv-section">
+		<h3>Couleurs de surbrillance des articles</h3>
+		<p class="cv-help">
+			Associez une couleur de fond aux articles d'un flux donné.
+			Cochez la case pour activer, puis choisissez une couleur.
+		</p>
+
+		<?php if (empty($feeds)) : ?>
+			<p>Aucun flux trouvé. Abonnez-vous à au moins un flux pour voir la liste.</p>
+		<?php else : ?>
+		<div class="cv-table-wrapper">
+			<table class="cv-table">
+				<thead>
+					<tr>
+						<th>Activer</th>
+						<th>Flux</th>
+						<th>Couleur</th>
+						<th>Aperçu</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ($feeds as $feed) :
+					$feedId       = (int) $feed->id();
+					$feedName     = htmlspecialchars((string) $feed->name());
+					$savedColor   = (string) ($feedColors[$feedId] ?? '');
+					$isEnabled    = $savedColor !== '';
+					$pickerValue  = $isEnabled ? $savedColor : '#fffde7';
+				?>
+					<tr>
+						<td class="cv-td-check">
+							<input type="checkbox"
+							       id="cv_enable_<?php echo $feedId; ?>"
+							       name="cv_color_enabled[<?php echo $feedId; ?>]"
+							       value="1"
+							       class="cv-enable-cb"
+							       data-feed-id="<?php echo $feedId; ?>"
+							       <?php echo $isEnabled ? 'checked="checked"' : ''; ?>>
+						</td>
+						<td>
+							<label for="cv_enable_<?php echo $feedId; ?>" class="cv-feed-name">
+								<?php echo $feedName; ?>
+							</label>
+						</td>
+						<td>
+						<div class="cv-color-cell">
+							<span class="cv-swatch-inner" id="cv_swatch_<?php echo $feedId; ?>" data-color="<?php echo $pickerValue; ?>"></span>
+							<input type="color"
+							       id="cv_color_<?php echo $feedId; ?>"
+							       name="cv_feed_colors[<?php echo $feedId; ?>]"
+							       value="<?php echo $pickerValue; ?>"
+							       class="cv-overlay-picker"
+							       data-feed-id="<?php echo $feedId; ?>">
+						</div>					<input type="text"
+					       id="cv_hex_<?php echo $feedId; ?>"
+					       class="cv-hex-input"
+					       value="<?php echo $pickerValue; ?>"
+					       data-feed-id="<?php echo $feedId; ?>"
+					       maxlength="7"
+					       pattern="#[0-9a-fA-F]{6}"
+					       placeholder="#rrggbb">						</td>
+						<td>
+							<span class="cv-preview"
+							      id="cv_preview_<?php echo $feedId; ?>"
+							      <?php if ($isEnabled): ?>data-color="<?php echo $savedColor; ?>"<?php endif; ?>>
+								Exemple de titre d'article
+							</span>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+		<?php endif; ?>
+	</section>
+
+	<!-- ================================================================
+	     SECTION 3 – INTERFACE COLORS
+	     ================================================================ -->
+	<section class="cv-section">
+		<h3>Couleurs de l'interface</h3>
+		<p class="cv-help">
+			Personnalisez les couleurs de la vue à trois panneaux.
+			Cochez une couleur pour l'activer ; laissez décochée pour hériter du thème FreshRSS actif.
+		</p>
+
+		<div class="cv-ui-themes">
+			<span class="cv-help">Thème prédéfini :</span>
+			<button type="button" class="btn cv-theme-btn" data-theme="light">Clair</button>
+			<button type="button" class="btn cv-theme-btn" data-theme="dark">Sombre</button>
+			<button type="button" class="btn cv-theme-btn" data-theme="nord">Nord</button>
+			<button type="button" class="btn cv-theme-btn" data-theme="lg">LG</button>
+			<button type="button" class="btn cv-theme-reset">Réinitialiser</button>
+		</div>
+
+		<div class="cv-table-wrapper">
+			<table class="cv-table">
+				<thead>
+					<tr>
+						<th>Activer</th>
+						<th>Élément</th>
+						<th>Couleur</th>
+						<th>Aperçu</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ($uiColorMeta as $key => $meta) :
+					$savedColor = (string)($uiColors[$key] ?? '');
+					$enabled    = $savedColor !== '';
+					$pickVal    = $enabled ? $savedColor : $meta['default'];
+				?>
+					<tr>
+						<td class="cv-td-check">
+							<input type="checkbox"
+							       id="cv_ui_en_<?php echo htmlspecialchars($key, ENT_QUOTES); ?>"
+
+							       class="cv-ui-enable-cb"
+							       data-ui-key="<?php echo htmlspecialchars($key, ENT_QUOTES); ?>"
+							       <?php echo $enabled ? 'checked="checked"' : ''; ?>>
+						</td>
+						<td>
+							<label for="cv_ui_en_<?php echo htmlspecialchars($key, ENT_QUOTES); ?>" class="cv-feed-name">
+								<?php echo htmlspecialchars($meta['label'], ENT_QUOTES); ?>
+							</label>
+						</td>
+						<td>
+						<div class="cv-color-cell">
+								<span class="cv-swatch-inner" id="cv_ui_swatch_<?php echo htmlspecialchars($key, ENT_QUOTES); ?>" data-color="<?php echo htmlspecialchars($pickVal, ENT_QUOTES); ?>"></span>
+							<input type="color"
+							       id="cv_ui_color_<?php echo htmlspecialchars($key, ENT_QUOTES); ?>"
+							       name="cv_ui_colors[<?php echo htmlspecialchars($key, ENT_QUOTES); ?>]"
+							       value="<?php echo htmlspecialchars($pickVal, ENT_QUOTES); ?>"
+							       class="cv-overlay-picker cv-ui-color-input"
+							       data-ui-key="<?php echo htmlspecialchars($key, ENT_QUOTES); ?>">
+						</div>					<input type="text"
+					       id="cv_ui_hex_<?php echo htmlspecialchars($key, ENT_QUOTES); ?>"
+					       class="cv-hex-input"
+					       value="<?php echo htmlspecialchars($pickVal, ENT_QUOTES); ?>"
+					       data-ui-key="<?php echo htmlspecialchars($key, ENT_QUOTES); ?>"
+					       maxlength="7"
+					       pattern="#[0-9a-fA-F]{6}"
+					       placeholder="#rrggbb">						</td>
+						<td>
+							<span class="cv-preview cv-ui-preview"
+							      id="cv_ui_preview_<?php echo htmlspecialchars($key, ENT_QUOTES); ?>"
+							      <?php if ($enabled): ?>data-color="<?php echo htmlspecialchars($savedColor, ENT_QUOTES); ?>"<?php endif; ?>>
+								Aperçu
+							</span>
+						</td>
+					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<div class="form-group form-actions">
+		<div class="group-controls">
+			<button type="submit" class="btn btn-important">Enregistrer</button>
+			<button type="reset"  class="btn">Annuler</button>
+		</div>
+	</div>
+
+</form>
+
+</div><!-- .cv-settings -->

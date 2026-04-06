@@ -1,0 +1,8 @@
+{
+	"name": "CustomView",
+	"author": "Custom",
+	"description": "Three-pane layout with configurable article highlight colors per feed.",
+	"version": "1.0",
+	"entrypoint": "CustomView",
+	"type": "user"
+}
