@@ -276,9 +276,9 @@ body.cv-three-panes #stream .flux .flux_header .item .title:has(~ .date) {
 	max-width: 100% !important;
 	min-width: 0 !important;
 	padding-right: 0 !important;
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
+	white-space: normal !important;
+	overflow: visible !important;
+	text-overflow: unset !important;
 }
 
 body.cv-three-panes #stream .flux .flux_header .item .date {
