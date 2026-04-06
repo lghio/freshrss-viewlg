@@ -1,6 +1,6 @@
 {
 	"name": "ViewLG",
-	"author": "Custom",
+	"author": "Laurent Ghio",
 	"description": "Three-pane layout with configurable article highlight colors per feed.",
 	"version": "1.0",
 	"entrypoint": "ViewLG",
