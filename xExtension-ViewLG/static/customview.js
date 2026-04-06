@@ -165,6 +165,7 @@
 			+ '<button id="cv-btn-prev"   class="cv-nav-btn" title="Article précédent" disabled>&#8593;</button>'
 			+ '<button id="cv-btn-next"   class="cv-nav-btn" title="Article suivant" disabled>&#8595;</button>'
 			+ '<button id="cv-btn-read"   class="cv-nav-btn" title="Marquer lu / non lu" disabled>Lu</button>'
+			+ '<button id="cv-btn-fav"    class="cv-nav-btn" title="Favori" disabled>&#9733;</button>'
 			+ '<button id="cv-btn-reader" class="cv-nav-btn" title="Afficher la page originale" disabled>Entier</button>'
 			+ '<button id="cv-btn-expand" class="cv-nav-btn cv-btn-expand" title="Ouvrir sur le site d\'origine" disabled>&#10064;</button>'
 			+ '</div>'
@@ -302,6 +303,7 @@
 			var btnPrev  = document.getElementById('cv-btn-prev');
 			var btnNext  = document.getElementById('cv-btn-next');
 			var btnRead  = document.getElementById('cv-btn-read');
+			var btnFav   = document.getElementById('cv-btn-fav');
 			if (btnPrev) btnPrev.disabled = (idx <= 0);
 			if (btnNext) btnNext.disabled = (idx < 0 || idx >= articles.length - 1);
 			if (btnRead) {
@@ -323,6 +325,26 @@
 					btnRead.innerHTML = '';
 					btnRead.title = 'Marquer lu / non lu';
 					btnRead.classList.remove('cv-nav-btn--active');
+				}
+			}
+			if (btnFav) {
+				btnFav.disabled = !current;
+				if (current) {
+					// Mirror the icon from the article's own bookmark button
+					var favLink = current.querySelector('a.bookmark');
+					var favIcon = favLink && favLink.querySelector('.icon');
+					if (favIcon) {
+						btnFav.innerHTML = favIcon.outerHTML;
+					} else {
+						btnFav.textContent = '\u2605';
+					}
+					var isFav = current.classList.contains('favorite');
+					btnFav.title = isFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
+					btnFav.classList.toggle('cv-nav-btn--active', isFav);
+				} else {
+					btnFav.innerHTML = '\u2605';
+					btnFav.title = 'Favori';
+					btnFav.classList.remove('cv-nav-btn--active');
 				}
 			}
 		}
@@ -352,6 +374,16 @@
 			mark_read(current, false, false);
 			// update button state after FreshRSS toggles the class
 			setTimeout(updateNavButtons, 100);
+		});
+		document.getElementById('cv-btn-fav').addEventListener('click', function () {
+			var current = getCurrentArticle();
+			if (!current) return;
+			// Delegates to FreshRSS's own bookmark anchor click
+			var favLink = current.querySelector('a.bookmark');
+			if (favLink) {
+				favLink.click();
+				setTimeout(updateNavButtons, 100);
+			}
 		});
 
 		var btnReader = document.getElementById('cv-btn-reader');
