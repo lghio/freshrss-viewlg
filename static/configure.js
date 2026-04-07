@@ -26,6 +26,7 @@
 				list_hover_title_bg:   '#f0f0f0',
 				list_hover_title_text: '#111111',
 				list_item_selected:    '#dceeff',
+				list_item_selected_text: '#222222',
 				content_bg:            '#ffffff',
 				content_text:          '#222222',
 				border:                '#dddddd',
@@ -36,11 +37,13 @@
 		dark: {
 			ui: {
 				list_bg:               '#1e2228',
+				list_text:             '#d4d4d4',
 				list_item_hover:       '#2a2f3a',
 				list_item_hover_text:  '#e8e8e8',
 				list_hover_title_bg:   '#2a2f3a',
 				list_hover_title_text: '#ffffff',
 				list_item_selected:    '#1e395a',
+				list_item_selected_text: '#d4d4d4',
 				content_bg:            '#252b35',
 				content_text:          '#d4d4d4',
 				border:                '#3a3f4b',
@@ -77,11 +80,13 @@
 		nord: {
 			ui: {
 				list_bg:               '#2e3440',
+				list_text:             '#eceff4',
 				list_item_hover:       '#3b4252',
 				list_item_hover_text:  '#e5e9f0',
 				list_hover_title_bg:   '#3b4252',
 				list_hover_title_text: '#eceff4',
 				list_item_selected:    '#5e81ac',
+				list_item_selected_text: '#eceff4',
 				content_bg:            '#3b4252',
 				content_text:          '#d8dee9',
 				border:                '#4c566a',
@@ -118,11 +123,13 @@
 		lg: {
 			ui: {
 				list_bg:               '#d6d6d9',
+				list_text:             '#111111',
 				list_item_hover:       '#18387b',
 				list_item_hover_text:  '#cfcfcf',
 				list_hover_title_bg:   '#2b13a4',
 				list_hover_title_text: '#d4d4d4',
 				list_item_selected:    '#dceeff',
+				list_item_selected_text: '#111111',
 				content_bg:            '#060033',
 				content_text:          '#cccccc',
 				border:                '#dddddd',

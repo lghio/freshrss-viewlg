@@ -261,7 +261,7 @@ final class ViewLGExtension extends Minz_Extension
 		$conf['feed_colors'] = $sanitized;
 
 		// UI theme colors (disabled inputs are not submitted → absence = unchecked)
-		$uiColorKeys = ['list_bg', 'list_item_hover', 'list_item_hover_text', 'list_hover_title_bg', 'list_hover_title_text', 'list_item_selected', 'content_bg', 'content_text', 'border', 'splitter'];
+		$uiColorKeys = ['list_bg', 'list_text', 'list_item_hover', 'list_item_hover_text', 'list_hover_title_bg', 'list_hover_title_text', 'list_item_selected', 'list_item_selected_text', 'content_bg', 'content_text', 'border', 'splitter'];
 		$uiColorsRaw = Minz_Request::paramArray('cv_ui_colors') ?? [];
 		$sanitizedUi = [];
 		foreach ($uiColorKeys as $key) {
@@ -433,6 +433,15 @@ final class ViewLGExtension extends Minz_Extension
 			$css .= 'body.cv-three-panes #stream .flux_header{background-color:' . $c['list_bg'] . "!important}\n";
 		}
 
+		if (!empty($c['list_text']) && preg_match($hexRe, $c['list_text'])) {
+			$t = $c['list_text'];
+			$css .= 'body.cv-three-panes #stream .flux_header,'
+				. 'body.cv-three-panes #stream .flux_header *,'
+				. 'body.cv-three-panes #stream .flux.not_read .flux_header,'
+				. 'body.cv-three-panes #stream .flux.not_read .flux_header *,'
+				. 'body.cv-three-panes #stream .day{color:' . $t . "!important}\n";
+		}
+
 		if (!empty($c['list_item_hover']) && preg_match($hexRe, $c['list_item_hover'])) {
 			$css .= 'body.cv-three-panes #stream .flux_header:hover{background-color:' . $c['list_item_hover'] . "!important}\n";
 		}
@@ -450,7 +459,16 @@ final class ViewLGExtension extends Minz_Extension
 		}
 
 		if (!empty($c['list_item_selected']) && preg_match($hexRe, $c['list_item_selected'])) {
-			$css .= 'body.cv-three-panes #stream .flux.current .flux_header{background-color:' . $c['list_item_selected'] . "!important}\n";
+			$css .= 'body.cv-three-panes #stream .flux.current,'
+				. 'body.cv-three-panes #stream .flux.current .flux_header,'
+				. 'body.cv-three-panes #stream .flux.current>.flux_header{background:' . $c['list_item_selected'] . "!important}\n";
+		}
+
+		if (!empty($c['list_item_selected_text']) && preg_match($hexRe, $c['list_item_selected_text'])) {
+			$css .= 'body.cv-three-panes #stream .flux.current,'
+				. 'body.cv-three-panes #stream .flux.current *,'
+				. 'body.cv-three-panes #stream .flux.current .flux_header,'
+				. 'body.cv-three-panes #stream .flux.current .flux_header *{color:' . $c['list_item_selected_text'] . "!important}\n";
 		}
 
 		if (!empty($c['content_bg']) && preg_match($hexRe, $c['content_bg'])) {
