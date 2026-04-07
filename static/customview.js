@@ -108,6 +108,42 @@
 	}
 
 	/**
+	 * DOM restructuring: wrap date + labels + share + link into a single
+	 * <li class="item cv-meta-row"> so they render on one flex row inside the
+	 * CSS Grid layout of col 2 row 5.  Safe to call multiple times – skips
+	 * headers that are already processed (data-cv-restructured attribute).
+	 */
+	function restructureArticleHeaders() {
+		if (!document.body.classList.contains('cv-three-panes')) return;
+		document.querySelectorAll('#stream .flux_header:not([data-cv-restructured])').forEach(function (header) {
+			header.setAttribute('data-cv-restructured', '1');
+
+			// Force manage buttons (read/fav) to flow as flex children.
+			var manageEl = header.querySelector('li.item.manage');
+			if (manageEl) {
+				manageEl.querySelectorAll('a, .item-element').forEach(function (btn) {
+					btn.style.setProperty('position', 'static', 'important');
+					btn.style.setProperty('display', 'inline-flex', 'important');
+					btn.style.setProperty('float', 'none', 'important');
+				});
+			}
+
+			var dateEl   = header.querySelector('span.item-element.date');
+			var labelsEl = header.querySelector('li.item.labels');
+			var shareEl  = header.querySelector('li.item.share');
+			var linkEl   = header.querySelector('li.item.link');
+			var metaRow  = document.createElement('li');
+			metaRow.className = 'item cv-meta-row';
+			// manage goes first so read/fav appear before date/labels/link
+			if (manageEl) metaRow.appendChild(manageEl);
+			[dateEl, labelsEl, shareEl, linkEl].forEach(function (el) {
+				if (el) metaRow.appendChild(el);
+			});
+			header.appendChild(metaRow);
+		});
+	}
+
+	/**
 	 * Run both color strategies and watch for dynamically injected articles
 	 * (auto-load / infinite scroll).
 	 */
@@ -569,6 +605,9 @@
 				}
 			}
 		});
+
+		// Apply thumbnail-column DOM restructuring to articles already in the stream
+		restructureArticleHeaders();
 	}
 
 	/* =========================================================================
@@ -582,8 +621,8 @@
 		// Three-pane init waits for window.context internally via setTimeout
 		initThreePanes();
 
-		// Re-run strategy B whenever new articles are inserted into the stream
-		monitorStream(colorizeByName);
+		// Re-run color and restructure whenever new articles are inserted into the stream
+		monitorStream(function () { colorizeByName(); restructureArticleHeaders(); });
 	}
 
 	// Handle both "page already loaded" and "page still loading" cases

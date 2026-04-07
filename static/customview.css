@@ -267,52 +267,86 @@ body.cv-three-panes .cv-loading {
 .cv-ui-themes { display: flex; align-items: center; gap: .5em; flex-wrap: wrap; margin: .5em 0 .75em; }
 
 /* -----------------------------------------------------------------------------
-   LIST PANE – compact row layout
-   Row 1 : [read][fav] [thumbnail]  [title … wrapping]
-                                    [summary … wrapping]   (if enabled)
-   Row 2 : [website name — full width]
-   Row 3 : [date]  [labels]  [link]
+   LIST PANE – two-column layout: [thumbnail + manage] | [content]
+   Col 1 : row 1 – thumbnail image
+            row 2 – manage buttons (read / fav), centered below image
+   Col 2 : row 1 – li.titleAuthorSummaryDate (title + summary together)
+            row 2 – website / source (full width)
+            row 3 – manage (read/fav) + date + labels + share + link  (one flex cell, via JS .cv-meta-row)
 
-   Key technique: li.titleAuthorSummaryDate uses display:contents so its
-   children (a.title, div.summary, span.date) become direct flex items and
-   can be independently ordered after li.website.
+   Key techniques:
+     • CSS Grid provides the two-column split.
+     • li.titleAuthorSummaryDate is placed as a block at col 2 row 1;
+       title and summary flow naturally inside it.
+     • JS (restructureArticleHeaders) wraps date/labels/share/link into a
+       single li.cv-meta-row so they appear on one flex row in col 2 row 3.
    ----------------------------------------------------------------------------- */
 
-/* Flex container */
+/* Grid container: col 1 = thumbnail + manage, col 2 = everything else */
 body.cv-three-panes #stream .flux .flux_header.horizontal-list {
-	display: flex !important;
-	flex-wrap: wrap;
-	align-items: flex-start;
+	display: grid !important;
+	grid-template-columns: auto 1fr;
+	column-gap: 8px;
+	row-gap: 0;
+	align-items: start;
+	align-content: start;
 	table-layout: unset;
 	width: 100%;
 }
 
-/* Reset table-cell on all li children */
+/* Reset list-item display on direct li children */
 body.cv-three-panes #stream .flux .flux_header.horizontal-list > li.item {
 	display: block !important;
 	vertical-align: unset;
 }
 
-/* Row 1 – manage buttons and thumbnail */
-body.cv-three-panes #stream .flux .flux_header > li.item.manage,
+/* Col 1 row 1 – thumbnail image */
 body.cv-three-panes #stream .flux .flux_header > li.item.thumbnail {
-	order: 1;
+	grid-column: 1;
+	grid-row: 1;
+	align-self: start;
 }
 
-/* "Dissolve" titleAuthorSummaryDate so its children become direct flex items */
+/* Thumbnail image: consistent size */
+body.cv-three-panes #stream .flux .flux_header > li.item.thumbnail img {
+	width: 80px;
+	height: 80px;
+	object-fit: cover;
+	display: block;
+	border-radius: 3px;
+}
+
+/* No thumbnail: hide the empty cell so column 1 collapses to 0 */
+body.cv-three-panes #stream .flux .flux_header > li.item.thumbnail:empty {
+	display: none !important;
+}
+
+/* Col 1 row 2 is unused – thumbnail spans col 1, manage is moved to cv-meta-row by JS. */
+
+/* Fallback CSS override (JS inline styles take precedence) */
+body.cv-three-panes #stream .flux .flux_header > li.item.manage a,
+body.cv-three-panes #stream .flux .flux_header > li.item.manage .item-element {
+	position: static !important;
+	display: inline-flex !important;
+	float: none !important;
+}
+
+/* Col 2 row 1 – title + summary grouped inside li.titleAuthorSummaryDate */
 body.cv-three-panes #stream .flux .flux_header > li.item.titleAuthorSummaryDate {
-	display: contents !important;
+	grid-column: 2;
+	grid-row: 1;
+	display: block !important;
+	min-width: 0;
+	margin: 0 !important;
+	padding: 0 !important;
 }
 
-/* Row 1 – title: grows to fill remaining space on title row */
 body.cv-three-panes #stream .flux .flux_header a.item-element.title {
-	order: 2;
-	flex: 1 1 0;
-	min-width: 0;
 	position: static !important;
 	display: block !important;
 	max-width: 100% !important;
-	padding-right: 0 !important;
+	padding: 0 !important;
+	margin: 0 !important;
 	white-space: normal !important;
 	overflow: visible !important;
 	text-overflow: unset !important;
@@ -320,25 +354,15 @@ body.cv-three-panes #stream .flux .flux_header a.item-element.title {
 	text-decoration: none;
 }
 
-/* Row 1 – summary (if shown): own full-width line after title */
 body.cv-three-panes #stream .flux .flux_header .summary {
-	order: 2;
-	flex: 0 0 100%;
-	margin-top: 0 !important;
+	margin: 0 !important;
+	padding: 0 !important;
 }
 
-/* Zero-height line-break between row 1 and row 2 */
-body.cv-three-panes #stream .flux .flux_header::after {
-	content: '';
-	order: 3;
-	flex: 0 0 100%;
-	height: 0;
-}
-
-/* Row 2 – website name: full width, own line */
+/* Col 2 row 2 – website / source */
 body.cv-three-panes #stream .flux .flux_header > li.item.website {
-	order: 4;
-	flex: 0 0 100%;
+	grid-column: 2;
+	grid-row: 2;
 	width: auto !important;
 }
 body.cv-three-panes #stream .flux .flux_header > li.item.website .item-element {
@@ -354,9 +378,25 @@ body.cv-three-panes #stream .flux .flux_header > li.item.website .favicon {
 	height: 12px;
 }
 
-/* Row 3 – date: now a direct flex item (parent has display:contents) */
-body.cv-three-panes #stream .flux .flux_header span.item-element.date {
-	order: 5;
+/* Col 2 row 3 – meta row: manage (read/fav) + date + labels + share + link on one flex line.
+   The manage li and date/labels/share/link are moved here by JS (restructureArticleHeaders). */
+body.cv-three-panes #stream .flux .flux_header > li.item.cv-meta-row {
+	grid-column: 2;
+	grid-row: 3;
+	display: flex !important;
+	flex-wrap: wrap;
+	align-items: center;
+	list-style: none;
+	padding: 0;
+}
+
+body.cv-three-panes #stream .flux .flux_header .cv-meta-row > li {
+	display: block;
+	list-style: none;
+}
+
+/* Date inside meta row */
+body.cv-three-panes #stream .flux .flux_header .cv-meta-row span.item-element.date {
 	position: static !important;
 	width: auto !important;
 	text-align: left !important;
@@ -366,17 +406,10 @@ body.cv-three-panes #stream .flux .flux_header span.item-element.date {
 	padding: 0.1rem var(--frss-padding-flux-items) 0.1rem 0;
 }
 
-/* Row 3 – labels and link: same order as date */
-body.cv-three-panes #stream .flux .flux_header > li.item.labels,
-body.cv-three-panes #stream .flux .flux_header > li.item.share,
-body.cv-three-panes #stream .flux .flux_header > li.item.link {
-	order: 5;
-	align-self: center;
-}
-
-body.cv-three-panes #stream .flux .flux_header > li.item.labels .item-element,
-body.cv-three-panes #stream .flux .flux_header > li.item.share .dropdown-toggle,
-body.cv-three-panes #stream .flux .flux_header > li.item.link .item-element {
+/* Labels, share, link padding inside meta row */
+body.cv-three-panes #stream .flux .flux_header .cv-meta-row > li.item.labels .item-element,
+body.cv-three-panes #stream .flux .flux_header .cv-meta-row > li.item.share .dropdown-toggle,
+body.cv-three-panes #stream .flux .flux_header .cv-meta-row > li.item.link .item-element {
 	padding-top: 0.1rem;
 	padding-bottom: 0.1rem;
 }
