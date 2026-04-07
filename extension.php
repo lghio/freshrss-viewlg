@@ -10,12 +10,178 @@ final class ViewLGExtension extends Minz_Extension
 		parent::init();
 
 		$this->registerHook('nav_entries', [$this, 'injectConfig']);
+		if ((bool) $this->getUserConfigurationValue('feed_discovery_enabled', false)) {
+			$this->registerHook('check_url_before_add', [$this, 'discoverFeedUrl']);
+		}
 		Minz_View::appendStyle($this->getFileUrl('customview.css'));
 		if ($this->hasFile('colors.css')) {
 			Minz_View::appendStyle($this->getFileUrl('colors.css', '', false));
 		}
 		Minz_View::appendScript($this->getFileUrl('customview.js'));
 		Minz_View::appendScript($this->getFileUrl('configure.js'));
+	}
+
+	// -------------------------------------------------------------------------
+	// RSS feed URL discovery (hook: check_url_before_add)
+	// -------------------------------------------------------------------------
+
+	/**
+	 * Called by FreshRSS before adding a feed.
+	 * If the URL already serves a valid feed, returns it unchanged.
+	 * Otherwise tries common RSS path suffixes and returns the first that works.
+	 * Returns null only if every attempt fails (blocks the add).
+	 */
+	public function discoverFeedUrl(string $url): ?string
+	{
+		$url = trim($url);
+
+		// 1. If the URL already looks like a direct feed, leave it alone
+		if ($this->urlIsFeed($url)) {
+			return $url;
+		}
+
+		// 2. Try to find a <link rel="alternate"> feed in the HTML
+		$discovered = $this->discoverFromHtml($url);
+		if ($discovered !== null) {
+			return $discovered;
+		}
+
+		// 3. Brute-force common RSS path suffixes
+		$base     = rtrim($url, '/');
+		$suffixes = [
+			'/feed',
+			'/rss',
+			'/feed.xml',
+			'/rss.xml',
+			'/index.xml',
+			'/atom.xml',
+			'/feed/rss2',
+			'/feeds/posts/default',
+		];
+
+		foreach ($suffixes as $suffix) {
+			$candidate = $base . $suffix;
+			if ($this->urlIsFeed($candidate)) {
+				return $candidate;
+			}
+		}
+
+		// 4. Nothing found – return the original URL and let FreshRSS handle it
+		return $url;
+	}
+
+	/**
+	 * Fetch the URL headers + first bytes via cURL and decide if it is a feed
+	 * (RSS / Atom / JSON Feed) by checking Content-Type and the first text bytes.
+	 */
+	private function urlIsFeed(string $url): bool
+	{
+		if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
+			return false;
+		}
+
+		$ch = curl_init($url);
+		curl_setopt_array($ch, [
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_HEADER         => true,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_MAXREDIRS      => 3,
+			CURLOPT_TIMEOUT        => 8,
+			CURLOPT_RANGE          => '0-4096', // only fetch the first 4 KB
+			CURLOPT_USERAGENT      => 'FreshRSS/ViewLG feed-discovery',
+			CURLOPT_SSL_VERIFYPEER => false,
+		]);
+		$response = curl_exec($ch);
+		curl_close($ch);
+
+		if ($response === false || $response === '') {
+			return false;
+		}
+
+		// Split headers from body
+		$parts    = explode("\r\n\r\n", (string)$response, 2);
+		$headers  = strtolower($parts[0] ?? '');
+		$body     = ltrim($parts[1] ?? '');
+
+		// Check Content-Type header
+		$feedMimes = ['rss+xml', 'atom+xml', 'feed+json', 'text/xml', 'application/xml'];
+		foreach ($feedMimes as $mime) {
+			if (strpos($headers, $mime) !== false) {
+				return true;
+			}
+		}
+
+		// Check body start (handles servers that return text/html for feeds)
+		if (preg_match('/^<(\?xml|rss|feed|channel)\b/i', $body)) {
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
+	 * Fetch the HTML of a page and look for <link rel="alternate"> feed tags.
+	 * Returns the first feed URL found, or null.
+	 */
+	private function discoverFromHtml(string $url): ?string
+	{
+		if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
+			return null;
+		}
+
+		$ch = curl_init($url);
+		curl_setopt_array($ch, [
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_MAXREDIRS      => 3,
+			CURLOPT_TIMEOUT        => 8,
+			CURLOPT_RANGE          => '0-32768', // first 32 KB is enough to find <link> tags
+			CURLOPT_USERAGENT      => 'FreshRSS/ViewLG feed-discovery',
+			CURLOPT_SSL_VERIFYPEER => false,
+		]);
+		$html = (string) curl_exec($ch);
+		curl_close($ch);
+
+		if ($html === '') {
+			return null;
+		}
+
+		// Match <link rel="alternate" type="application/rss+xml|atom+xml" href="...">
+		if (preg_match(
+			'/<link[^>]+rel=["\']alternate["\'][^>]+type=["\']application\/(rss|atom|feed)\+[^"\']*["\'][^>]+href=["\']([^"\']+)["\'][^>]*>/i',
+			$html,
+			$m
+		)) {
+			return $this->absolutiseUrl($m[2], $url);
+		}
+
+		// Also match reversed attribute order (href before type)
+		if (preg_match(
+			'/<link[^>]+href=["\']([^"\']+)["\'][^>]+rel=["\']alternate["\'][^>]+type=["\']application\/(rss|atom|feed)\+/i',
+			$html,
+			$m
+		)) {
+			return $this->absolutiseUrl($m[1], $url);
+		}
+
+		return null;
+	}
+
+	/** Convert a possibly relative feed URL to absolute using the base page URL. */
+	private function absolutiseUrl(string $feedUrl, string $baseUrl): string
+	{
+		if (preg_match('/^https?:\/\//i', $feedUrl)) {
+			return $feedUrl;
+		}
+		$parts = parse_url($baseUrl);
+		$scheme = ($parts['scheme'] ?? 'https') . '://';
+		$host   = $parts['host'] ?? '';
+		$port   = isset($parts['port']) ? ':' . $parts['port'] : '';
+		if (strpos($feedUrl, '/') === 0) {
+			return $scheme . $host . $port . $feedUrl;
+		}
+		$path = isset($parts['path']) ? dirname($parts['path']) . '/' : '/';
+		return $scheme . $host . $port . $path . $feedUrl;
 	}
 
 	public function handleConfigureAction(): void
@@ -73,6 +239,9 @@ final class ViewLGExtension extends Minz_Extension
 
 		// Three-pane layout toggle
 		$conf['three_panes_enabled'] = Minz_Request::paramBoolean('cv_three_panes_enabled', false);
+
+		// Feed discovery toggle
+		$conf['feed_discovery_enabled'] = Minz_Request::paramBoolean('cv_feed_discovery_enabled', false);
 
 		// Default reader mode
 		$readerMode = Minz_Request::param('cv_default_reader_mode', 'summary');

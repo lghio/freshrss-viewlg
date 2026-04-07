@@ -56,6 +56,21 @@ $uiColorMeta     = [
 			</select>
 		</label>
 		<p class="cv-help">Détermine si le panneau droit affiche le résumé RSS ou charge directement la page originale dans un iframe.</p>
+
+		<label class="cv-row-label" style="margin-top:.75em" for="cv_feed_discovery_enabled">
+			<input type="checkbox"
+			       id="cv_feed_discovery_enabled"
+			       name="cv_feed_discovery_enabled"
+			       value="1"
+			       <?php echo $this->getUserConfigurationValue('feed_discovery_enabled', false) ? 'checked="checked"' : ''; ?>>
+			Activer la découverte automatique de flux RSS
+		</label>
+		<p class="cv-help">
+			Si l'URL saisie n'est pas un flux RSS direct, l'extension tente de trouver le flux en
+			analysant le HTML de la page (<code>&lt;link rel="alternate"&gt;</code>)
+			puis en testant les chemins courants (<code>/feed</code>, <code>/rss</code>, etc.).
+			Peut légèrement ralentir l'ajout d'un abonnement.
+		</p>
 	</section>
 
 	<!-- ================================================================
