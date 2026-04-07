@@ -202,7 +202,14 @@
 			+ '<button id="cv-btn-next"   class="cv-nav-btn" title="Article suivant" disabled>&#8595;</button>'
 			+ '<button id="cv-btn-read"   class="cv-nav-btn" title="Marquer lu / non lu" disabled>Lu</button>'
 			+ '<button id="cv-btn-fav"    class="cv-nav-btn" title="Favori" disabled>&#9733;</button>'
-			+ '<button id="cv-btn-reader" class="cv-nav-btn" title="Afficher la page originale" disabled>Entier</button>'
+			+ '<button id="cv-btn-reader" class="cv-nav-btn" title="Afficher l\'article entier" disabled>'
+			+   '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+			+     '<rect x="4" y="2" width="16" height="20" rx="2"/>'
+			+     '<line x1="8" y1="7" x2="16" y2="7"/>'
+			+     '<line x1="8" y1="11" x2="16" y2="11"/>'
+			+     '<line x1="8" y1="15" x2="12" y2="15"/>'
+			+   '</svg>'
+			+ '</button>'
 			+ '<button id="cv-btn-expand" class="cv-nav-btn cv-btn-expand" title="Ouvrir sur le site d\'origine" disabled>&#10064;</button>'
 			+ '</div>'
 			+ '<div class="flux">' + initialHtml + '</div>'
@@ -332,6 +339,44 @@
 			}
 		}
 
+		var _svgCache = {};
+
+		/**
+		 * Fetch an SVG icon by its <img> src, strip hardcoded fill/stroke
+		 * attributes so the SVG uses currentColor, then return the SVG markup.
+		 * Result is cached by URL. Falls back to the original <img> outerHTML.
+		 */
+		function inlineSvgIcon(imgEl, callback) {
+			var src = imgEl ? imgEl.getAttribute('src') : '';
+			if (!src) { callback(imgEl ? imgEl.outerHTML : ''); return; }
+			if (_svgCache[src]) { callback(_svgCache[src]); return; }
+			fetch(src, { credentials: 'same-origin' })
+				.then(function (r) { return r.text(); })
+				.then(function (text) {
+					// Parse and neutralise all hardcoded colors
+					var tmp = document.createElement('div');
+					tmp.innerHTML = text;
+					var svg = tmp.querySelector('svg');
+					if (!svg) { callback(imgEl.outerHTML); return; }
+					svg.setAttribute('class', 'icon');
+					svg.removeAttribute('height');
+					svg.removeAttribute('width');
+					svg.setAttribute('aria-hidden', 'true');
+					svg.querySelectorAll('[fill]').forEach(function (el) {
+						el.setAttribute('fill', 'currentColor');
+					});
+					svg.querySelectorAll('[stroke]').forEach(function (el) {
+						if (el.getAttribute('stroke') !== 'none') {
+							el.setAttribute('stroke', 'currentColor');
+						}
+					});
+					var result = svg.outerHTML;
+					_svgCache[src] = result;
+					callback(result);
+				})
+				.catch(function () { callback(imgEl.outerHTML); });
+		}
+
 		function updateNavButtons() {
 			var current  = getCurrentArticle();
 			var articles = getArticles();
@@ -345,14 +390,15 @@
 			if (btnRead) {
 				btnRead.disabled = !current;
 				if (current) {
-					// Mirror the icon from the article's own read button
+					// Mirror the icon from the article's own read button (inline SVG for color control)
 					var readLink = current.querySelector('a.read');
 					var iconEl   = readLink && readLink.querySelector('.icon');
-					if (iconEl) {
+					if (iconEl && iconEl.tagName === 'IMG') {
+						inlineSvgIcon(iconEl, function (html) { btnRead.innerHTML = html; });
+					} else if (iconEl) {
 						btnRead.innerHTML = iconEl.outerHTML;
 					} else {
-						var isUnread = current.classList.contains('not_read');
-						btnRead.textContent = isUnread ? '✉' : '✉';
+						btnRead.textContent = '✉';
 					}
 					var isUnread = current.classList.contains('not_read');
 					btnRead.title = isUnread ? 'Marquer comme lu' : 'Marquer comme non lu';
@@ -366,10 +412,12 @@
 			if (btnFav) {
 				btnFav.disabled = !current;
 				if (current) {
-					// Mirror the icon from the article's own bookmark button
+					// Mirror the icon from the article's own bookmark button (inline SVG for color control)
 					var favLink = current.querySelector('a.bookmark');
 					var favIcon = favLink && favLink.querySelector('.icon');
-					if (favIcon) {
+					if (favIcon && favIcon.tagName === 'IMG') {
+						inlineSvgIcon(favIcon, function (html) { btnFav.innerHTML = html; });
+					} else if (favIcon) {
 						btnFav.innerHTML = favIcon.outerHTML;
 					} else {
 						btnFav.textContent = '\u2605';
@@ -430,8 +478,8 @@
 			function doFallback() {
 				_isFullMode = false;
 				panelContent.innerHTML = _currentRssHtml;
-				btnReader.textContent = 'Entier';
 				btnReader.classList.remove('cv-nav-btn--active');
+				btnReader.title = 'Afficher l\'article entier';
 				var notice = document.createElement('p');
 				notice.className = 'cv-iframe-blocked';
 				notice.innerHTML = 'Ce site bloque l\'affichage en iframe. '
@@ -472,21 +520,21 @@
 			}
 		}
 
-		// Set initial label to reflect the configured default
+		// Set initial state to reflect the configured default
 		if (cfg.defaultReaderMode === 'full') {
-			btnReader.textContent = 'Résumé';
 			btnReader.classList.add('cv-nav-btn--active');
+			btnReader.title = 'Afficher le résumé';
 		}
 		btnReader.addEventListener('click', function () {
 			_isFullMode = !_isFullMode;
 			if (_isFullMode) {
 				loadFullMode(_currentArticleUrl);
-				btnReader.textContent  = 'Résumé';
 				btnReader.classList.add('cv-nav-btn--active');
+				btnReader.title = 'Afficher le résumé';
 			} else {
 				panelContent.innerHTML = _currentRssHtml;
-				btnReader.textContent  = 'Entier';
 				btnReader.classList.remove('cv-nav-btn--active');
+				btnReader.title = 'Afficher l\'article entier';
 			}
 		});
 
@@ -557,12 +605,12 @@
 			if (cfg.defaultReaderMode === 'full' && _currentArticleUrl) {
 				_isFullMode = true;
 				loadFullMode(_currentArticleUrl);
-				btnReader.textContent  = 'Résumé';
 				btnReader.classList.add('cv-nav-btn--active');
+				btnReader.title = 'Afficher le résumé';
 			} else {
 				_isFullMode = false;
-				btnReader.textContent = 'Entier';
 				btnReader.classList.remove('cv-nav-btn--active');
+				btnReader.title = 'Afficher l\'article entier';
 			}
 			btnReader.disabled = !_currentArticleUrl;
 			if (btnExpand) btnExpand.disabled = !_currentArticleUrl;

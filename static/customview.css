@@ -113,12 +113,12 @@
 		border: 1px solid rgba(128,128,128,.4);
 		border-radius: 4px;
 		background: rgba(128,128,128,.1);
-		color: inherit;
+		color: var(--sid-font-color, inherit);
 		cursor: pointer;
 		font-size: 14px;
 		line-height: 1;
 		padding: 4px 8px;
-		transition: background .15s, opacity .15s;
+		transition: background .15s, color .15s, border-color .15s, opacity .15s;
 		display: inline-flex;
 		align-items: center;
 		justify-content: center;
@@ -132,7 +132,7 @@
 	}
 
 	body.cv-three-panes .cv-nav-btn:hover:not(:disabled) {
-		background: rgba(128,128,128,.25);
+		background: var(--sid-bg-dark, rgba(128,128,128,.25));
 	}
 
 	body.cv-three-panes .cv-nav-btn:disabled {
@@ -144,9 +144,15 @@
 		margin-left: auto;
 	}
 
+	/* Active (toggled-on): same accent as the nav menu active item */
 	body.cv-three-panes .cv-nav-btn--active {
-		background: rgba(100,160,255,.25);
-		border-color: rgba(100,160,255,.6);
+		background: var(--main-first, #2563eb);
+		border-color: var(--main-first-alt, #1d4ed8);
+		color: var(--sid-active-font, #ffffff) !important;
+	}
+
+	body.cv-three-panes .cv-nav-btn--active:hover:not(:disabled) {
+		background: var(--main-first-alt, #1d4ed8);
 	}
 
 	body.cv-three-panes #threepanesview > .flux {
@@ -225,6 +231,19 @@
 /* Widen the FreshRSS settings slider when ViewLG config is open */
 #slider.active:target {
 	width: min(1100px, 95vw) !important;
+}
+
+/* Move the FreshRSS "Supprimer" button (rendered before our form by the
+   framework) to the visual bottom using flex ordering */
+#slider .post {
+	display: flex;
+	flex-direction: column;
+}
+#slider .post > #form-extension {
+	order: 99;
+	border-top: 1px solid rgba(128,128,128,.2);
+	margin-top: 1.5em;
+	padding-top: 1em;
 }
 
 .cv-settings { max-width: 100%; }
