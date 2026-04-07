@@ -272,11 +272,31 @@ final class ViewLGExtension extends Minz_Extension
 		}
 		$conf['ui_colors'] = $sanitizedUi;
 
+		// CSS variable overrides (FreshRSS theme variables)
+		$cssVarAllKeys = [
+			'sid-bg', 'sid-bg-alt', 'sid-bg-dark', 'sid-font-color', 'sid-sep', 'sid-active', 'sid-active-font',
+			'main-first', 'main-first-alt', 'main-first-light', 'main-first-darker',
+			'unread-article-background-color', 'unread-article-background-color-hover', 'unread-article-border-color',
+			'favorite-article-background-color', 'favorite-article-background-color-hover', 'favorite-article-border-color',
+			'unread-bg', 'unread-font-color', 'fav-bg',
+			'font-color', 'font-color-grey', 'font-color-link', 'font-color-link-hover',
+			'background-color-grey',
+		];
+		$cssVarsRaw    = Minz_Request::paramArray('cv_css_vars') ?? [];
+		$sanitizedVars = [];
+		foreach ($cssVarAllKeys as $key) {
+			$val = (string) ($cssVarsRaw[$key] ?? '');
+			if (preg_match('/^#[0-9a-fA-F]{6}$/', $val)) {
+				$sanitizedVars[$key] = strtolower($val);
+			}
+		}
+		$conf['css_vars'] = $sanitizedVars;
+
 		// setUserConfiguration persists via $conf->extensions[$name] and calls save()
 		$this->setUserConfiguration($conf);
 
 		// Generate a per-user CSS file served as a trusted 'self' resource
-		$this->saveFile('colors.css', $this->generateColorCss($sanitizedUi));
+		$this->saveFile('colors.css', $this->generateCssVars($sanitizedVars) . $this->generateColorCss($sanitizedUi));
 	}
 
 	/**
@@ -330,6 +350,74 @@ final class ViewLGExtension extends Minz_Extension
 	// -------------------------------------------------------------------------
 	// CSS generation
 	// -------------------------------------------------------------------------
+
+	/**
+	 * Generate :root { } overrides for FreshRSS theme CSS variables,
+	 * plus direct !important rules for sidebar elements so they work
+	 * on any theme (including Flat which uses no CSS variables).
+	 */
+	private function generateCssVars(array $vars): string
+	{
+		$hexRe   = '/^#[0-9a-fA-F]{6}$/';
+		$allowed = [
+			'sid-bg', 'sid-bg-alt', 'sid-bg-dark', 'sid-font-color', 'sid-sep', 'sid-active', 'sid-active-font',
+			'main-first', 'main-first-alt', 'main-first-light', 'main-first-darker',
+			'unread-article-background-color', 'unread-article-background-color-hover', 'unread-article-border-color',
+			'favorite-article-background-color', 'favorite-article-background-color-hover', 'favorite-article-border-color',
+			'unread-bg', 'unread-font-color', 'fav-bg',
+			'font-color', 'font-color-grey', 'font-color-link', 'font-color-link-hover',
+			'background-color-grey',
+		];
+		$rules = [];
+		foreach ($allowed as $key) {
+			if (!empty($vars[$key]) && preg_match($hexRe, $vars[$key])) {
+				$rules[] = '--' . $key . ':' . $vars[$key];
+			}
+		}
+
+		$css = '';
+		if (!empty($rules)) {
+			$css .= "/* ViewLG CSS variable overrides */\n:root{\n" . implode(";\n", $rules) . "\n}\n";
+		}
+
+		// Direct rules for sidebar — work on ALL themes including those without CSS variables
+		$v = static function (string $key) use ($vars, $hexRe): string {
+			return (!empty($vars[$key]) && preg_match($hexRe, $vars[$key])) ? $vars[$key] : '';
+		};
+
+		$sidBg         = $v('sid-bg');
+		$sidBgAlt      = $v('sid-bg-alt');
+		$sidBgDark     = $v('sid-bg-dark');
+		$sidFont       = $v('sid-font-color');
+		$sidSep        = $v('sid-sep');
+		$sidActive     = $v('sid-active');
+		$sidActiveFont = $v('sid-active-font');
+
+		if ($sidBg) {
+			$css .= "/* ViewLG sidebar direct overrides */\n";
+			$css .= ".aside,#sidebar,#header{background-color:{$sidBg}!important}\n";
+		}
+		if ($sidBgAlt) {
+			$css .= ".aside .category,.aside .tree-folder-items,.aside .nav-list{background-color:{$sidBgAlt}!important}\n";
+		}
+		if ($sidBgDark) {
+			$css .= ".aside .item a:hover,.aside .item:hover,.nav-list .item a:hover{background-color:{$sidBgDark}!important}\n";
+		}
+		if ($sidFont) {
+			$css .= ".aside,.aside *,#header,#header *{color:{$sidFont}!important}\n";
+		}
+		if ($sidSep) {
+			$css .= ".aside .sep,.aside hr,.nav-list .sep{border-color:{$sidSep}!important;background-color:{$sidSep}!important}\n";
+		}
+		if ($sidActive) {
+			$css .= ".aside .item.active>a,.aside .item.active{background-color:{$sidActive}!important}\n";
+		}
+		if ($sidActiveFont) {
+			$css .= ".aside .item.active>a,.aside .item.active>a *{color:{$sidActiveFont}!important}\n";
+		}
+
+		return $css;
+	}
 
 	private function generateColorCss(array $c): string
 	{
@@ -418,5 +506,11 @@ final class ViewLGExtension extends Minz_Extension
 	{
 		$colors = $this->getUserConfigurationValue('ui_colors', []);
 		return is_array($colors) ? $colors : [];
+	}
+
+	public function getCssVars(): array
+	{
+		$vars = $this->getUserConfigurationValue('css_vars', []);
+		return is_array($vars) ? $vars : [];
 	}
 }

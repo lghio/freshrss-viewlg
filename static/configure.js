@@ -19,52 +19,142 @@
 
 	var CV_THEMES = {
 		light: {
-			list_bg:               '#fafafa',
-			list_item_hover:       '#f0f0f0',
-			list_item_hover_text:  '#222222',
-			list_hover_title_bg:   '#f0f0f0',
-			list_hover_title_text: '#111111',
-			list_item_selected:    '#dceeff',
-			content_bg:            '#ffffff',
-			content_text:          '#222222',
-			border:                '#dddddd',
-			splitter:              '#999999'
+			ui: {
+				list_bg:               '#fafafa',
+				list_item_hover:       '#f0f0f0',
+				list_item_hover_text:  '#222222',
+				list_hover_title_bg:   '#f0f0f0',
+				list_hover_title_text: '#111111',
+				list_item_selected:    '#dceeff',
+				content_bg:            '#ffffff',
+				content_text:          '#222222',
+				border:                '#dddddd',
+				splitter:              '#999999'
+			},
+			cssVars: {}  // hérite tout du thème FreshRSS actif
 		},
 		dark: {
-			list_bg:               '#1e2228',
-			list_item_hover:       '#2a2f3a',
-			list_item_hover_text:  '#e8e8e8',
-			list_hover_title_bg:   '#2a2f3a',
-			list_hover_title_text: '#ffffff',
-			list_item_selected:    '#1e395a',
-			content_bg:            '#252b35',
-			content_text:          '#d4d4d4',
-			border:                '#3a3f4b',
-			splitter:              '#4a5060'
+			ui: {
+				list_bg:               '#1e2228',
+				list_item_hover:       '#2a2f3a',
+				list_item_hover_text:  '#e8e8e8',
+				list_hover_title_bg:   '#2a2f3a',
+				list_hover_title_text: '#ffffff',
+				list_item_selected:    '#1e395a',
+				content_bg:            '#252b35',
+				content_text:          '#d4d4d4',
+				border:                '#3a3f4b',
+				splitter:              '#4a5060'
+			},
+			cssVars: {
+				'sid-bg':                                    '#1e2228',
+				'sid-bg-alt':                               '#252b35',
+				'sid-bg-dark':                              '#141418',
+				'sid-font-color':                           '#c8c8c8',
+				'sid-sep':                                  '#3a3f4b',
+				'sid-active':                               '#4a7fd4',
+				'sid-active-font':                          '#ffffff',
+				'main-first':                               '#4a7fd4',
+				'main-first-alt':                           '#3a6fc4',
+				'main-first-light':                         '#1e2a3a',
+				'main-first-darker':                        '#0a0d12',
+				'unread-article-background-color':          '#1a2535',
+				'unread-article-background-color-hover':    '#1e2a3a',
+				'unread-article-border-color':              '#d4520a',
+				'unread-bg':                                '#1a2535',
+				'unread-font-color':                        '#4a7fd4',
+				'favorite-article-background-color':        '#2a2010',
+				'favorite-article-background-color-hover':  '#2e2412',
+				'favorite-article-border-color':            '#c98800',
+				'fav-bg':                                   '#d4a000',
+				'font-color':                               '#d4d4d4',
+				'font-color-grey':                          '#888888',
+				'font-color-link':                          '#6a9fd4',
+				'font-color-link-hover':                    '#8ab4e4',
+				'background-color-grey':                    '#2a2f3a'
+			}
 		},
 		nord: {
-			list_bg:               '#2e3440',
-			list_item_hover:       '#3b4252',
-			list_item_hover_text:  '#e5e9f0',
-			list_hover_title_bg:   '#3b4252',
-			list_hover_title_text: '#eceff4',
-			list_item_selected:    '#5e81ac',
-			content_bg:            '#3b4252',
-			content_text:          '#d8dee9',
-			border:                '#4c566a',
-			splitter:              '#4c566a'
+			ui: {
+				list_bg:               '#2e3440',
+				list_item_hover:       '#3b4252',
+				list_item_hover_text:  '#e5e9f0',
+				list_hover_title_bg:   '#3b4252',
+				list_hover_title_text: '#eceff4',
+				list_item_selected:    '#5e81ac',
+				content_bg:            '#3b4252',
+				content_text:          '#d8dee9',
+				border:                '#4c566a',
+				splitter:              '#4c566a'
+			},
+			cssVars: {
+				'sid-bg':                                    '#2e3440',
+				'sid-bg-alt':                               '#272c36',
+				'sid-bg-dark':                              '#1e2228',
+				'sid-font-color':                           '#eceff4',
+				'sid-sep':                                  '#4c566a',
+				'sid-active':                               '#5e81ac',
+				'sid-active-font':                          '#eceff4',
+				'main-first':                               '#5e81ac',
+				'main-first-alt':                           '#4e71ac',
+				'main-first-light':                         '#e0e8f0',
+				'main-first-darker':                        '#1a2030',
+				'unread-article-background-color':          '#2e3440',
+				'unread-article-background-color-hover':    '#3b4252',
+				'unread-article-border-color':              '#bf616a',
+				'unread-bg':                                '#2e3440',
+				'unread-font-color':                        '#88c0d0',
+				'favorite-article-background-color':        '#3b3440',
+				'favorite-article-background-color-hover':  '#403848',
+				'favorite-article-border-color':            '#ebcb8b',
+				'fav-bg':                                   '#ebcb8b',
+				'font-color':                               '#eceff4',
+				'font-color-grey':                          '#d8dee9',
+				'font-color-link':                          '#88c0d0',
+				'font-color-link-hover':                    '#8fbcbb',
+				'background-color-grey':                    '#2e3440'
+			}
 		},
 		lg: {
-			list_bg:               '#d6d6d9',
-			list_item_hover:       '#18387b',
-			list_item_hover_text:  '#cfcfcf',
-			list_hover_title_bg:   '#2b13a4',
-			list_hover_title_text: '#d4d4d4',
-			list_item_selected:    '#dceeff',
-			content_bg:            '#060033',
-			content_text:          '#cccccc',
-			border:                '#dddddd',
-			splitter:              '#999999'
+			ui: {
+				list_bg:               '#d6d6d9',
+				list_item_hover:       '#18387b',
+				list_item_hover_text:  '#cfcfcf',
+				list_hover_title_bg:   '#2b13a4',
+				list_hover_title_text: '#d4d4d4',
+				list_item_selected:    '#dceeff',
+				content_bg:            '#060033',
+				content_text:          '#cccccc',
+				border:                '#dddddd',
+				splitter:              '#999999'
+			},
+			cssVars: {
+				'sid-bg':                                    '#060033',
+				'sid-bg-alt':                               '#0a0050',
+				'sid-bg-dark':                              '#030020',
+				'sid-font-color':                           '#d0d0d0',
+				'sid-sep':                                  '#1a3080',
+				'sid-active':                               '#18387b',
+				'sid-active-font':                          '#ffffff',
+				'main-first':                               '#18387b',
+				'main-first-alt':                           '#0e2861',
+				'main-first-light':                         '#d0d8ee',
+				'main-first-darker':                        '#030015',
+				'unread-article-background-color':          '#0c1040',
+				'unread-article-background-color-hover':    '#101448',
+				'unread-article-border-color':              '#4060cc',
+				'unread-bg':                                '#0c1040',
+				'unread-font-color':                        '#7090dd',
+				'favorite-article-background-color':        '#1a1040',
+				'favorite-article-background-color-hover':  '#1e1448',
+				'favorite-article-border-color':            '#8060cc',
+				'fav-bg':                                   '#8060cc',
+				'font-color':                               '#cccccc',
+				'font-color-grey':                          '#888888',
+				'font-color-link':                          '#7090dd',
+				'font-color-link-hover':                    '#90b0ff',
+				'background-color-grey':                    '#0a0050'
+			}
 		}
 	};
 
@@ -110,6 +200,16 @@
 		if (hexEl) hexEl.value = value;
 	}
 
+	function updateCssVarRow(key, value) {
+		var cb      = document.getElementById('cv_cv_en_'      + key);
+		var preview = document.getElementById('cv_cv_preview_' + key);
+		var swatch  = document.getElementById('cv_cv_swatch_'  + key);
+		var hexEl   = document.getElementById('cv_cv_hex_'     + key);
+		setSwatch(swatch, value);
+		setPreview(preview, cb ? cb.checked : true, value);
+		if (hexEl) hexEl.value = value;
+	}
+
 	/* =========================================================================
 	   Theme applier
 	   ========================================================================= */
@@ -117,18 +217,45 @@
 	function applyUiTheme(themeKey) {
 		var theme = CV_THEMES[themeKey];
 		if (!theme) return;
-		for (var key in theme) {
-			if (!Object.prototype.hasOwnProperty.call(theme, key)) continue;
+
+		// Apply UI panel colors (section 2)
+		var ui = theme.ui || {};
+		for (var key in ui) {
+			if (!Object.prototype.hasOwnProperty.call(ui, key)) continue;
 			var cb      = document.getElementById('cv_ui_en_'      + key);
 			var picker  = document.getElementById('cv_ui_color_'   + key);
 			var preview = document.getElementById('cv_ui_preview_' + key);
 			var swatch  = document.getElementById('cv_ui_swatch_'  + key);
 			if (!picker) continue;
 			if (cb) cb.checked = true;
-			picker.value       = theme[key];
-			_tracked[picker.id] = theme[key];
-			setSwatch(swatch, theme[key]);
-			setPreview(preview, true, theme[key]);
+			picker.value        = ui[key];
+			_tracked[picker.id] = ui[key];
+			setSwatch(swatch, ui[key]);
+			setPreview(preview, true, ui[key]);
+		}
+
+		// Apply CSS variable overrides (section 3)
+		// First uncheck all cssvar rows, then set only those provided by the theme
+		document.querySelectorAll('.cv-cssvar-enable-cb').forEach(function (cb) {
+			cb.checked = false;
+			var k = cb.getAttribute('data-cssvar-key');
+			setPreview(document.getElementById('cv_cv_preview_' + k), false, '');
+		});
+		var cssVars = theme.cssVars || {};
+		for (var vkey in cssVars) {
+			if (!Object.prototype.hasOwnProperty.call(cssVars, vkey)) continue;
+			var vcb      = document.getElementById('cv_cv_en_'      + vkey);
+			var vpicker  = document.getElementById('cv_cv_color_'   + vkey);
+			var vpreview = document.getElementById('cv_cv_preview_' + vkey);
+			var vswatch  = document.getElementById('cv_cv_swatch_'  + vkey);
+			var vhex     = document.getElementById('cv_cv_hex_'     + vkey);
+			if (!vpicker) continue;
+			if (vcb) vcb.checked = true;
+			vpicker.value        = cssVars[vkey];
+			_tracked[vpicker.id] = cssVars[vkey];
+			setSwatch(vswatch, cssVars[vkey]);
+			setPreview(vpreview, true, cssVars[vkey]);
+			if (vhex) vhex.value = cssVars[vkey];
 		}
 	}
 
@@ -156,6 +283,14 @@
 				var cbUi = document.getElementById('cv_ui_en_' + uiKey);
 				if (cbUi) cbUi.checked = true;
 				updateUiRow(uiKey, val);
+				return;
+			}
+
+			var cssvarKey = picker.getAttribute('data-cssvar-key');
+			if (cssvarKey) {
+				var cbCv = document.getElementById('cv_cv_en_' + cssvarKey);
+				if (cbCv) cbCv.checked = true;
+				updateCssVarRow(cssvarKey, val);
 			}
 		});
 		requestAnimationFrame(poll);
@@ -210,14 +345,26 @@
 			});
 		});
 
+		/* CSS variable override rows */
+		settings.querySelectorAll('.cv-cssvar-enable-cb').forEach(function (cb) {
+			var key = cb.getAttribute('data-cssvar-key');
+			var p = document.getElementById('cv_cv_color_' + key);
+			if (p) updateCssVarRow(key, p.value);
+			cb.addEventListener('change', function () {
+				var p2 = document.getElementById('cv_cv_color_' + key);
+				if (p2) updateCssVarRow(key, p2.value);
+			});
+		});
+
 		/* Hex text inputs – typing a valid #rrggbb updates the picker + row */
 		var hexRe = /^#[0-9a-fA-F]{6}$/;
 		settings.querySelectorAll('.cv-hex-input').forEach(function (hexEl) {
 			hexEl.addEventListener('input', function () {
 				var val = hexEl.value.trim();
 				if (!hexRe.test(val)) return;
-				var feedId = hexEl.getAttribute('data-feed-id');
-				var uiKey  = hexEl.getAttribute('data-ui-key');
+				var feedId    = hexEl.getAttribute('data-feed-id');
+				var uiKey     = hexEl.getAttribute('data-ui-key');
+				var cssvarKey = hexEl.getAttribute('data-cssvar-key');
 				if (feedId) {
 					var picker = document.getElementById('cv_color_' + feedId);
 					if (picker) { picker.value = val; _tracked[picker.id] = val; }
@@ -226,6 +373,10 @@
 					var pickerUi = document.getElementById('cv_ui_color_' + uiKey);
 					if (pickerUi) { pickerUi.value = val; _tracked[pickerUi.id] = val; }
 					updateUiRow(uiKey, val);
+				} else if (cssvarKey) {
+					var pickerCv = document.getElementById('cv_cv_color_' + cssvarKey);
+					if (pickerCv) { pickerCv.value = val; _tracked[pickerCv.id] = val; }
+					updateCssVarRow(cssvarKey, val);
 				}
 			});
 			/* Select all on focus for easy copy/paste */
@@ -243,6 +394,13 @@
 				document.querySelectorAll('.cv-ui-enable-cb').forEach(function (cb) {
 					var key    = cb.getAttribute('data-ui-key');
 					var picker = document.getElementById('cv_ui_color_' + key);
+					if (picker && !cb.checked) {
+						picker.disabled = true;
+					}
+				});
+				document.querySelectorAll('.cv-cssvar-enable-cb').forEach(function (cb) {
+					var key    = cb.getAttribute('data-cssvar-key');
+					var picker = document.getElementById('cv_cv_color_' + key);
 					if (picker && !cb.checked) {
 						picker.disabled = true;
 					}
@@ -265,6 +423,11 @@
 					var key = cb.getAttribute('data-ui-key');
 					cb.checked = false;
 					setPreview(document.getElementById('cv_ui_preview_' + key), false, '');
+				});
+				document.querySelectorAll('.cv-cssvar-enable-cb').forEach(function (cb) {
+					var key = cb.getAttribute('data-cssvar-key');
+					cb.checked = false;
+					setPreview(document.getElementById('cv_cv_preview_' + key), false, '');
 				});
 			});
 		}

@@ -19,6 +19,46 @@ $uiColorMeta     = [
 	'border'             => ['label' => 'Bordures / séparateurs',  'default' => '#dddddd'],
 	'splitter'           => ['label' => 'Barre de séparation',     'default' => '#999999'],
 ];
+$cssVars    = $this->getCssVars();
+$cssVarMeta = [
+	'Sidebar' => [
+		'sid-bg'          => ['css' => '--sid-bg',          'label' => 'Fond général de la sidebar',        'default' => '#303136'],
+		'sid-bg-alt'      => ['css' => '--sid-bg-alt',      'label' => 'Fond des groupes (sidebar)',        'default' => '#26272a'],
+		'sid-bg-dark'     => ['css' => '--sid-bg-dark',     'label' => 'Survol dans la sidebar',            'default' => '#17181a'],
+		'sid-font-color'  => ['css' => '--sid-font-color',  'label' => 'Texte de la sidebar',               'default' => '#ffffff'],
+		'sid-sep'         => ['css' => '--sid-sep',         'label' => 'Séparateurs de la sidebar',         'default' => '#3f3f3f'],
+		'sid-active'      => ['css' => '--sid-active',      'label' => "Fond de l'item actif",              'default' => '#3366cc'],
+		'sid-active-font' => ['css' => '--sid-active-font', 'label' => "Texte de l'item actif",             'default' => '#ffffff'],
+	],
+	'Couleur principale' => [
+		'main-first'        => ['css' => '--main-first',        'label' => "Couleur d'accent principale",  'default' => '#3366cc'],
+		'main-first-alt'    => ['css' => '--main-first-alt',    'label' => 'Accent (survol)',               'default' => '#2255cc'],
+		'main-first-light'  => ['css' => '--main-first-light',  'label' => 'Accent (claire)',               'default' => '#effcfd'],
+		'main-first-darker' => ['css' => '--main-first-darker', 'label' => 'Accent (très sombre)',          'default' => '#1d1e22'],
+	],
+	'Articles non lus' => [
+		'unread-article-background-color'       => ['css' => '--unread-article-background-color',       'label' => 'Fond des articles non lus',         'default' => '#fff3ed'],
+		'unread-article-background-color-hover' => ['css' => '--unread-article-background-color-hover', 'label' => 'Fond non lus (survol)',             'default' => '#faeee8'],
+		'unread-article-border-color'           => ['css' => '--unread-article-border-color',           'label' => 'Barre gauche des articles non lus', 'default' => '#ff5300'],
+		'unread-bg'                             => ['css' => '--unread-bg',                             'label' => 'Fond non lu (thème Mapco/Pafat)',   'default' => '#f2f6f8'],
+		'unread-font-color'                     => ['css' => '--unread-font-color',                     'label' => 'Texte du compteur non lu',          'default' => '#3366cc'],
+	],
+	'Articles favoris' => [
+		'favorite-article-background-color'       => ['css' => '--favorite-article-background-color',       'label' => 'Fond des articles favoris',         'default' => '#fff6da'],
+		'favorite-article-background-color-hover' => ['css' => '--favorite-article-background-color-hover', 'label' => 'Fond favoris (survol)',             'default' => '#fcf2d6'],
+		'favorite-article-border-color'           => ['css' => '--favorite-article-border-color',           'label' => 'Barre gauche des articles favoris', 'default' => '#ffc300'],
+		'fav-bg'                                  => ['css' => '--fav-bg',                                  'label' => "Couleur étoile favori",             'default' => '#ffc300'],
+	],
+	'Texte & liens' => [
+		'font-color'            => ['css' => '--font-color',            'label' => 'Texte principal',  'default' => '#111111'],
+		'font-color-grey'       => ['css' => '--font-color-grey',       'label' => 'Texte atténué',    'default' => '#666666'],
+		'font-color-link'       => ['css' => '--font-color-link',       'label' => 'Liens',            'default' => '#0062be'],
+		'font-color-link-hover' => ['css' => '--font-color-link-hover', 'label' => 'Liens (survol)',   'default' => '#003388'],
+	],
+	'Fonds & bordures' => [
+		'background-color-grey' => ['css' => '--background-color-grey', 'label' => 'Fond légèrement grisé (groupes, en-têtes)', 'default' => '#f0f0f0'],
+	],
+];
 ?>
 <div class="cv-settings">
 
@@ -147,6 +187,88 @@ $uiColorMeta     = [
 							</span>
 						</td>
 					</tr>
+				<?php endforeach; ?>
+				</tbody>
+			</table>
+		</div>
+	</section>
+
+	<!-- ================================================================
+	     SECTION 3 – CSS VARIABLE OVERRIDES
+	     ================================================================ -->
+	<section class="cv-section">
+		<h3>Variables CSS du thème</h3>
+		<p class="cv-help">
+			Surchargez les variables CSS natives de FreshRSS pour personnaliser l'apparence globale
+			(sidebar, couleur d'accent, articles non lus, etc.).
+			Cochez une variable pour l'activer ; laissez vide pour hériter du thème actif.
+			La variable CSS correspondante est indiquée pour référence.
+		</p>
+
+		<div class="cv-table-wrapper">
+			<table class="cv-table">
+				<thead>
+					<tr>
+						<th>Activer</th>
+						<th>Variable CSS</th>
+						<th>Rôle</th>
+						<th>Couleur</th>
+						<th>Aperçu</th>
+					</tr>
+				</thead>
+				<tbody>
+				<?php foreach ($cssVarMeta as $groupName => $groupVars) : ?>
+					<tr class="cv-group-header">
+						<td colspan="5"><?php echo htmlspecialchars($groupName, ENT_QUOTES); ?></td>
+					</tr>
+					<?php foreach ($groupVars as $key => $meta) :
+						$savedColor = (string)($cssVars[$key] ?? '');
+						$enabled    = $savedColor !== '';
+						$pickVal    = $enabled ? $savedColor : $meta['default'];
+						$safeKey    = htmlspecialchars($key, ENT_QUOTES);
+					?>
+					<tr>
+						<td class="cv-td-check">
+							<input type="checkbox"
+							       id="cv_cv_en_<?php echo $safeKey; ?>"
+							       class="cv-cssvar-enable-cb"
+							       data-cssvar-key="<?php echo $safeKey; ?>"
+							       <?php echo $enabled ? 'checked="checked"' : ''; ?>>
+						</td>
+						<td>
+							<label for="cv_cv_en_<?php echo $safeKey; ?>" class="cv-feed-name">
+								<code><?php echo htmlspecialchars($meta['css'], ENT_QUOTES); ?></code>
+							</label>
+						</td>
+						<td><?php echo htmlspecialchars($meta['label'], ENT_QUOTES); ?></td>
+						<td>
+							<div class="cv-color-cell">
+								<span class="cv-swatch-inner" id="cv_cv_swatch_<?php echo $safeKey; ?>" data-color="<?php echo htmlspecialchars($pickVal, ENT_QUOTES); ?>"></span>
+								<input type="color"
+								       id="cv_cv_color_<?php echo $safeKey; ?>"
+								       name="cv_css_vars[<?php echo $safeKey; ?>]"
+								       value="<?php echo htmlspecialchars($pickVal, ENT_QUOTES); ?>"
+								       class="cv-overlay-picker cv-cssvar-color-input"
+								       data-cssvar-key="<?php echo $safeKey; ?>">
+							</div>
+							<input type="text"
+							       id="cv_cv_hex_<?php echo $safeKey; ?>"
+							       class="cv-hex-input"
+							       value="<?php echo htmlspecialchars($pickVal, ENT_QUOTES); ?>"
+							       data-cssvar-key="<?php echo $safeKey; ?>"
+							       maxlength="7"
+							       pattern="#[0-9a-fA-F]{6}"
+							       placeholder="#rrggbb">
+						</td>
+						<td>
+							<span class="cv-preview cv-cssvar-preview"
+							      id="cv_cv_preview_<?php echo $safeKey; ?>"
+							      <?php if ($enabled): ?>data-color="<?php echo htmlspecialchars($savedColor, ENT_QUOTES); ?>"<?php endif; ?>>
+								Aperçu
+							</span>
+						</td>
+					</tr>
+					<?php endforeach; ?>
 				<?php endforeach; ?>
 				</tbody>
 			</table>
