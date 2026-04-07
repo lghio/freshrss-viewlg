@@ -198,10 +198,10 @@
 		wrapper.insertAdjacentHTML('beforeend',
 			'<div id="threepanesview">'
 			+ '<div id="cv-nav-bar">'
-			+ '<button id="cv-btn-prev"   class="cv-nav-btn" title="Article précédent" disabled>&#8593;</button>'
-			+ '<button id="cv-btn-next"   class="cv-nav-btn" title="Article suivant" disabled>&#8595;</button>'
-			+ '<button id="cv-btn-read"   class="cv-nav-btn" title="Marquer lu / non lu" disabled>Lu</button>'
-			+ '<button id="cv-btn-fav"    class="cv-nav-btn" title="Favori" disabled>&#9733;</button>'
+			+ '<button id="cv-btn-prev"   class="cv-nav-btn" title="Article précédent" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></button>'
+			+ '<button id="cv-btn-next"   class="cv-nav-btn" title="Article suivant" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>'
+			+ '<button id="cv-btn-read"   class="cv-nav-btn" title="Marquer lu / non lu" disabled></button>'
+			+ '<button id="cv-btn-fav"    class="cv-nav-btn" title="Favori" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>'
 			+ '<button id="cv-btn-reader" class="cv-nav-btn" title="Afficher l\'article entier" disabled>'
 			+   '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
 			+     '<rect x="4" y="2" width="16" height="20" rx="2"/>'
@@ -210,7 +210,7 @@
 			+     '<line x1="8" y1="15" x2="12" y2="15"/>'
 			+   '</svg>'
 			+ '</button>'
-			+ '<button id="cv-btn-expand" class="cv-nav-btn cv-btn-expand" title="Ouvrir sur le site d\'origine" disabled>&#10064;</button>'
+			+ '<button id="cv-btn-expand" class="cv-nav-btn cv-btn-expand" title="Ouvrir sur le site d\'origine" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button>'
 			+ '</div>'
 			+ '<div class="flux">' + initialHtml + '</div>'
 			+ '</div>');
@@ -389,22 +389,16 @@
 			if (btnNext) btnNext.disabled = (idx < 0 || idx >= articles.length - 1);
 			if (btnRead) {
 				btnRead.disabled = !current;
+				// Unread = closed envelope, Read = open envelope — both stroke-based (currentColor)
+				var closedEnvSvg = '<svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 7 10-7"/></svg>';
+				var openEnvSvg   = '<svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.2 8.4c.5.38.8.97.8 1.6v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V10a2 2 0 0 1 .8-1.6l8-6a2 2 0 0 1 2.4 0l8 6Z"/><path d="m22 10-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 10"/></svg>';
 				if (current) {
-					// Mirror the icon from the article's own read button (inline SVG for color control)
-					var readLink = current.querySelector('a.read');
-					var iconEl   = readLink && readLink.querySelector('.icon');
-					if (iconEl && iconEl.tagName === 'IMG') {
-						inlineSvgIcon(iconEl, function (html) { btnRead.innerHTML = html; });
-					} else if (iconEl) {
-						btnRead.innerHTML = iconEl.outerHTML;
-					} else {
-						btnRead.textContent = '✉';
-					}
 					var isUnread = current.classList.contains('not_read');
+					btnRead.innerHTML = isUnread ? closedEnvSvg : openEnvSvg;
 					btnRead.title = isUnread ? 'Marquer comme lu' : 'Marquer comme non lu';
 					btnRead.classList.toggle('cv-nav-btn--active', !isUnread);
 				} else {
-					btnRead.innerHTML = '';
+					btnRead.innerHTML = closedEnvSvg;
 					btnRead.title = 'Marquer lu / non lu';
 					btnRead.classList.remove('cv-nav-btn--active');
 				}
@@ -412,21 +406,10 @@
 			if (btnFav) {
 				btnFav.disabled = !current;
 				if (current) {
-					// Mirror the icon from the article's own bookmark button (inline SVG for color control)
-					var favLink = current.querySelector('a.bookmark');
-					var favIcon = favLink && favLink.querySelector('.icon');
-					if (favIcon && favIcon.tagName === 'IMG') {
-						inlineSvgIcon(favIcon, function (html) { btnFav.innerHTML = html; });
-					} else if (favIcon) {
-						btnFav.innerHTML = favIcon.outerHTML;
-					} else {
-						btnFav.textContent = '\u2605';
-					}
 					var isFav = current.classList.contains('favorite');
 					btnFav.title = isFav ? 'Retirer des favoris' : 'Ajouter aux favoris';
 					btnFav.classList.toggle('cv-nav-btn--active', isFav);
 				} else {
-					btnFav.innerHTML = '\u2605';
 					btnFav.title = 'Favori';
 					btnFav.classList.remove('cv-nav-btn--active');
 				}
