@@ -59,85 +59,7 @@ $uiColorMeta     = [
 	</section>
 
 	<!-- ================================================================
-	     SECTION 2 – HIGHLIGHT COLORS
-	     ================================================================ -->
-	<section class="cv-section">
-		<h3>Couleurs de surbrillance des articles</h3>
-		<p class="cv-help">
-			Associez une couleur de fond aux articles d'un flux donné.
-			Cochez la case pour activer, puis choisissez une couleur.
-		</p>
-
-		<?php if (empty($feeds)) : ?>
-			<p>Aucun flux trouvé. Abonnez-vous à au moins un flux pour voir la liste.</p>
-		<?php else : ?>
-		<div class="cv-table-wrapper">
-			<table class="cv-table">
-				<thead>
-					<tr>
-						<th>Activer</th>
-						<th>Flux</th>
-						<th>Couleur</th>
-						<th>Aperçu</th>
-					</tr>
-				</thead>
-				<tbody>
-				<?php foreach ($feeds as $feed) :
-					$feedId       = (int) $feed->id();
-					$feedName     = htmlspecialchars((string) $feed->name());
-					$savedColor   = (string) ($feedColors[$feedId] ?? '');
-					$isEnabled    = $savedColor !== '';
-					$pickerValue  = $isEnabled ? $savedColor : '#fffde7';
-				?>
-					<tr>
-						<td class="cv-td-check">
-							<input type="checkbox"
-							       id="cv_enable_<?php echo $feedId; ?>"
-							       name="cv_color_enabled[<?php echo $feedId; ?>]"
-							       value="1"
-							       class="cv-enable-cb"
-							       data-feed-id="<?php echo $feedId; ?>"
-							       <?php echo $isEnabled ? 'checked="checked"' : ''; ?>>
-						</td>
-						<td>
-							<label for="cv_enable_<?php echo $feedId; ?>" class="cv-feed-name">
-								<?php echo $feedName; ?>
-							</label>
-						</td>
-						<td>
-						<div class="cv-color-cell">
-							<span class="cv-swatch-inner" id="cv_swatch_<?php echo $feedId; ?>" data-color="<?php echo $pickerValue; ?>"></span>
-							<input type="color"
-							       id="cv_color_<?php echo $feedId; ?>"
-							       name="cv_feed_colors[<?php echo $feedId; ?>]"
-							       value="<?php echo $pickerValue; ?>"
-							       class="cv-overlay-picker"
-							       data-feed-id="<?php echo $feedId; ?>">
-						</div>					<input type="text"
-					       id="cv_hex_<?php echo $feedId; ?>"
-					       class="cv-hex-input"
-					       value="<?php echo $pickerValue; ?>"
-					       data-feed-id="<?php echo $feedId; ?>"
-					       maxlength="7"
-					       pattern="#[0-9a-fA-F]{6}"
-					       placeholder="#rrggbb">						</td>
-						<td>
-							<span class="cv-preview"
-							      id="cv_preview_<?php echo $feedId; ?>"
-							      <?php if ($isEnabled): ?>data-color="<?php echo $savedColor; ?>"<?php endif; ?>>
-								Exemple de titre d'article
-							</span>
-						</td>
-					</tr>
-				<?php endforeach; ?>
-				</tbody>
-			</table>
-		</div>
-		<?php endif; ?>
-	</section>
-
-	<!-- ================================================================
-	     SECTION 3 – INTERFACE COLORS
+	     SECTION 2 – INTERFACE COLORS
 	     ================================================================ -->
 	<section class="cv-section">
 		<h3>Couleurs de l'interface</h3>
@@ -219,7 +141,7 @@ $uiColorMeta     = [
 	<div class="form-group form-actions">
 		<div class="group-controls">
 			<button type="submit" class="btn btn-important">Enregistrer</button>
-			<button type="reset"  class="btn">Annuler</button>
+			<a href="#close" class="btn">Annuler</a>
 		</div>
 	</div>
 
