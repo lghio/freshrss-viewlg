@@ -1,0 +1,7 @@
+# Files ignored by GitHub Copilot
+
+# Generated CSS – do not use as context for code suggestions
+static/colors.css
+
+# Temporary patch scripts
+static/patch*.php

@@ -211,6 +211,10 @@
 			+   '</svg>'
 			+ '</button>'
 			+ '<button id="cv-btn-expand" class="cv-nav-btn cv-btn-expand" title="Ouvrir sur le site d\'origine" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button>'
+			+ '<span class="cv-nav-sep"></span>'
+			+ '<button id="cv-btn-zoom-out" class="cv-nav-btn" title="Zoom -"><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>'
+			+ '<button id="cv-btn-zoom-reset" class="cv-nav-btn" title="Zoom 100%"><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>'
+			+ '<button id="cv-btn-zoom-in"  class="cv-nav-btn" title="Zoom +"><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>'
 			+ '</div>'
 			+ '<div class="flux">' + initialHtml + '</div>'
 			+ '</div>');
@@ -453,8 +457,41 @@
 			}
 		});
 
-		var btnReader = document.getElementById('cv-btn-reader');
-		var btnExpand = document.getElementById('cv-btn-expand');
+		var btnReader   = document.getElementById('cv-btn-reader');
+		var btnExpand   = document.getElementById('cv-btn-expand');
+		var btnZoomIn   = document.getElementById('cv-btn-zoom-in');
+		var btnZoomOut  = document.getElementById('cv-btn-zoom-out');
+		var btnZoomReset = document.getElementById('cv-btn-zoom-reset');
+
+		// ---------------------------------------------------------------
+		// Zoom
+		// ---------------------------------------------------------------
+		var ZOOM_STEP = 0.1;
+		var ZOOM_MIN  = 0.5;
+		var ZOOM_MAX  = 3.0;
+		var _zoom = parseFloat(localStorage.getItem('cv-zoom') || '1');
+		if (isNaN(_zoom) || _zoom < ZOOM_MIN || _zoom > ZOOM_MAX) _zoom = 1;
+
+		function applyZoom() {
+			panelContent.style.fontSize = (_zoom === 1 ? '' : (_zoom * 100).toFixed(0) + '%');
+			if (btnZoomReset) btnZoomReset.title = 'Zoom ' + Math.round(_zoom * 100) + '% (réinitialiser)';
+			try { localStorage.setItem('cv-zoom', _zoom.toFixed(2)); } catch (e) {}
+		}
+
+		applyZoom();
+
+		if (btnZoomIn) btnZoomIn.addEventListener('click', function () {
+			_zoom = Math.min(ZOOM_MAX, parseFloat((_zoom + ZOOM_STEP).toFixed(2)));
+			applyZoom();
+		});
+		if (btnZoomOut) btnZoomOut.addEventListener('click', function () {
+			_zoom = Math.max(ZOOM_MIN, parseFloat((_zoom - ZOOM_STEP).toFixed(2)));
+			applyZoom();
+		});
+		if (btnZoomReset) btnZoomReset.addEventListener('click', function () {
+			_zoom = 1;
+			applyZoom();
+		});
 
 		// Load URL in iframe; auto-fallback to RSS if site blocks iframes
 		function loadFullMode(url) {
@@ -537,6 +574,7 @@
 				panelContent.setAttribute('id', articleId);
 			}
 			panelContent.scrollTop = 0;
+			applyZoom();
 		};
 
 		var onArticleOpened = function (articleEl) {

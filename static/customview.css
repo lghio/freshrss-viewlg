@@ -155,6 +155,16 @@
 		background: var(--main-first-alt, #1d4ed8);
 	}
 
+	body.cv-three-panes .cv-nav-sep {
+		display: inline-block;
+		width: 1px;
+		height: 1.4em;
+		background: currentColor;
+		opacity: .25;
+		margin: 0 .25em;
+		vertical-align: middle;
+	}
+
 	body.cv-three-panes #threepanesview > .flux {
 		min-height: 0;
 		flex: 1 1 0;
