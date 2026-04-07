@@ -473,7 +473,7 @@
 		if (isNaN(_zoom) || _zoom < ZOOM_MIN || _zoom > ZOOM_MAX) _zoom = 1;
 
 		function applyZoom() {
-			panelContent.style.fontSize = (_zoom === 1 ? '' : (_zoom * 100).toFixed(0) + '%');
+			panelContent.style.zoom = (_zoom === 1 ? '' : String(_zoom));
 			if (btnZoomReset) btnZoomReset.title = 'Zoom ' + Math.round(_zoom * 100) + '% (réinitialiser)';
 			try { localStorage.setItem('cv-zoom', _zoom.toFixed(2)); } catch (e) {}
 		}
