@@ -236,7 +236,17 @@ final class ViewLGExtension extends Minz_Extension
 
 		// AJAX endpoint: full-page proxy (bypasses X-Frame-Options / CSP)
 		if (Minz_Request::param('cv_action') === 'page') {
-			$this->serveProxiedPage((string) Minz_Request::param('url', ''));
+			$this->serveProxiedPage((string) Minz_Request::param('url', ''), false, false);
+		}
+		
+		// AJAX endpoint: full-page proxy sans scripts
+		if (Minz_Request::param('cv_action') === 'page_noscript') {
+			$this->serveProxiedPage((string) Minz_Request::param('url', ''), true, false);
+		}
+
+		// AJAX endpoint: full-page proxy avec extraction (Readability)
+		if (Minz_Request::param('cv_action') === 'page_readability') {
+			$this->serveProxiedPage((string) Minz_Request::param('url', ''), false, true);
 		}
 
 		// Always load feeds for the settings page
@@ -260,7 +270,8 @@ final class ViewLGExtension extends Minz_Extension
 
 		// Default reader mode
 		$readerMode = Minz_Request::param('cv_default_reader_mode', 'summary');
-		$conf['default_reader_mode'] = ($readerMode === 'full') ? 'full' : 'summary';
+		$validModes = ['summary', 'full', 'full_ns', 'readability'];
+		$conf['default_reader_mode'] = in_array($readerMode, $validModes, true) ? $readerMode : 'summary';
 
 		// Feed highlight colors
 		$enabledFeeds  = Minz_Request::paramArray('cv_color_enabled') ?? [];
@@ -346,7 +357,7 @@ final class ViewLGExtension extends Minz_Extension
 		}
 
 		$threePanesAttr    = $threePanesEnabled ? 'true' : 'false';
-		$defaultReaderAttr = ($defaultReaderMode === 'full') ? 'full' : 'summary';
+		$defaultReaderAttr = htmlspecialchars($defaultReaderMode, ENT_QUOTES);
 		$checkFrameUrl     = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'check_frame']], 'php', true), ENT_QUOTES);
 		$idColorsJson   = htmlspecialchars((string) json_encode($feedIdColors, JSON_THROW_ON_ERROR), ENT_QUOTES);
 		$nameColorsJson = htmlspecialchars((string) json_encode($feedNameColors, JSON_THROW_ON_ERROR), ENT_QUOTES);
@@ -356,6 +367,9 @@ final class ViewLGExtension extends Minz_Extension
 		$imageCacheAttr    = $imageCacheEnabled ? 'true' : 'false';
 		$imageProxyUrl     = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'img']], 'php', true), ENT_QUOTES);
 		$pageProxyUrl      = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'page']], 'php', true), ENT_QUOTES);
+		$pageNsProxyUrl    = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'page_noscript']], 'php', true), ENT_QUOTES);
+		$pageReadProxyUrl  = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'page_readability']], 'php', true), ENT_QUOTES);
+		$settingsUrl       = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName()]], 'php', true), ENT_QUOTES);
 
 		return '<div id="cv_config"'
 			. ' data-three-panes="'      . $threePanesAttr    . '"'
@@ -367,6 +381,9 @@ final class ViewLGExtension extends Minz_Extension
 			. ' data-image-cache="'      . $imageCacheAttr    . '"'
 			. ' data-image-proxy-url="'  . $imageProxyUrl     . '"'
 			. ' data-page-proxy-url="'   . $pageProxyUrl      . '"'
+			. ' data-page-ns-proxy-url="'. $pageNsProxyUrl   . '"'
+			. ' data-page-read-proxy-url="'. $pageReadProxyUrl . '"'
+			. ' data-settings-url="'     . $settingsUrl      . '"'
 			. '></div>';
 	}
 
@@ -669,7 +686,7 @@ final class ViewLGExtension extends Minz_Extension
                         echo "Fatal Exception in serveProxiedImage: " . $e->getMessage() . " on line " . $e->getLine();
                         exit;
                 }        }
-	private function serveProxiedPage(string $url): void
+	private function serveProxiedPage(string $url, bool $noScript = false, bool $readability = false): void
 	{
 		if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
 			http_response_code(400);
@@ -731,6 +748,71 @@ final class ViewLGExtension extends Minz_Extension
 		$html = preg_replace($cspMetaRe, '', $html);
 		$html = preg_replace($xfoMetaRe, '', $html);
 
+		if ($noScript || $readability) {
+			// Force videos to have standard controls since custom JS players are removed
+			$html = preg_replace('/<video\b(?![^>]*controls)[^>]*>/is', '$0 controls="controls" ', $html);
+		}
+
+		if ($noScript) {
+			$html = preg_replace('/<script\b[^>]*>(.*?)<\/script>/is', '', $html);
+			$html = preg_replace('/on[a-z]+=["\'][^"\']*["\']/is', '', $html);
+		}
+
+		if ($readability) {
+			$html .= '
+			<script src="https://unpkg.com/@tehshrike/readability@0.2.0"></script>
+			<script>
+				document.addEventListener("DOMContentLoaded", function() {
+					// Protéger les vidéos pour que Readability ne les supprime pas (à cause de classes contenant "card", "ad", etc.)
+					document.querySelectorAll("video, iframe").forEach(function(v) {
+						// Nettoyer les dimensions et styles forcés de Ghost et autres CMS
+						v.removeAttribute("width");
+						v.removeAttribute("height");
+						v.removeAttribute("style");
+						
+						var p = v.parentElement;
+						while(p && p !== document.body) {
+							p.className = "";
+							p.id = "";
+							p.removeAttribute("style");
+							p = p.parentElement;
+						}
+					});
+					
+					var article = new Readability(document).parse();
+					if (article) {
+						var bg = "#ffffff", fg = "#222222", link = "#0056b3", bodyBg = "#f4f4f4";
+						try {
+							if (window.parent && window.parent.document) {
+								var pStyle = window.parent.getComputedStyle(window.parent.document.querySelector("#threepanesview") || window.parent.document.body);
+								var a = window.parent.document.createElement("a");
+								a.href = "#";
+								window.parent.document.body.appendChild(a);
+								link = window.parent.getComputedStyle(a).color || link;
+								window.parent.document.body.removeChild(a);
+								bg = pStyle.backgroundColor || bg;
+								fg = pStyle.color || fg;
+								
+								// Estimate body background as slightly darker/lighter than pane background
+								var rgb = bg.match(/\d+/g);
+								if (rgb && rgb.length >= 3) {
+									var r = parseInt(rgb[0]), g = parseInt(rgb[1]), b = parseInt(rgb[2]);
+									var isDark = (r*0.299 + g*0.587 + b*0.114) < 128;
+									var diff = isDark ? -10 : -10;
+									bodyBg = "rgb(" + Math.max(0,r+diff) + "," + Math.max(0,g+diff) + "," + Math.max(0,b+diff) + ")";
+								} else {
+									bodyBg = window.parent.getComputedStyle(window.parent.document.body).backgroundColor || bodyBg;
+								}
+							}
+						} catch(e) {}
+
+						var css = "<style>body { background: "+bodyBg+"; color: "+fg+"; font-family: sans-serif; line-height: 1.6; margin: 0; padding: 20px; } a { color: "+link+"; } figure { margin: 1em 0; padding: 0; box-sizing: border-box; } img, video, iframe { max-width: 100% !important; height: auto !important; border-radius: 4px; display: block; margin: 0 auto; } video { width: 100% !important; background: #000; } .cv-container { max-width: 800px; margin: 0 auto; padding: 30px; background: "+bg+"; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); } .cv-title-link:hover { opacity: 0.8; }</style>";
+						document.body.innerHTML = css + "<div class=\'cv-container\'><h1><a href=\'' . htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8') . '\' target=\'_blank\' rel=\'noopener noreferrer\' class=\'cv-title-link\' style=\'color:inherit;text-decoration:none;transition:opacity 0.2s;\'>" + article.title + "</a></h1>" + article.content + "</div>";
+					}
+				});
+			</script>';
+		}
+
 		// Remove any X-Frame-Options / CSP frame-ancestors headers that FreshRSS
 		// (or PHP itself) may have set globally — without this, browsers block the
 		// iframe even though the content is served from the same origin.
@@ -740,7 +822,7 @@ final class ViewLGExtension extends Minz_Extension
 		header_remove('X-WebKit-CSP');
 
 		// Explicitly send a CSP allowing this page to be framed by the same origin (FreshRSS)
-		header("Content-Security-Policy: default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors 'self';");
+		header("Content-Security-Policy: default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors 'self'; script-src * 'unsafe-inline' 'unsafe-eval';");
 
 		header('Content-Type: text/html; charset=utf-8');
 		header('Cache-Control: private, no-store');

@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@tehshrike/readability": "^0.2.0",
+    "jsdom": "^27.0.1"
+  }
+}

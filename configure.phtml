@@ -93,11 +93,13 @@ $cssVarMeta = [
 		<label class="cv-row-label" style="margin-top:.75em">
 			Mode de lecture par défaut :
 			<select name="cv_default_reader_mode" id="cv_default_reader_mode">
-				<option value="summary"  <?php echo $defaultReaderMode !== 'full' ? 'selected' : ''; ?>>Résumé (contenu RSS)</option>
-				<option value="full"     <?php echo $defaultReaderMode === 'full'  ? 'selected' : ''; ?>>Entier (page originale)</option>
+				<option value="summary"     <?php echo $defaultReaderMode === 'summary'     ? 'selected' : ''; ?>>Résumé (contenu RSS)</option>
+				<option value="full"        <?php echo $defaultReaderMode === 'full'        ? 'selected' : ''; ?>>Web (page entière)</option>
+				<option value="full_ns"     <?php echo $defaultReaderMode === 'full_ns'     ? 'selected' : ''; ?>>No-script (sans popups)</option>
+				<option value="readability" <?php echo $defaultReaderMode === 'readability' ? 'selected' : ''; ?>>Extraction (mode lecture)</option>
 			</select>
 		</label>
-		<p class="cv-help">Détermine si le panneau droit affiche le résumé RSS ou charge directement la page originale dans un iframe.</p>
+		<p class="cv-help">Détermine l'affichage par défaut dans le panneau droit lors de l'ouverture d'un article.</p>
 
 		<label class="cv-row-label" style="margin-top:.75em" for="cv_feed_discovery_enabled">
 			<input type="checkbox"

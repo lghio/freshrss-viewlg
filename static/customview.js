@@ -22,7 +22,10 @@
 		uiColors:          {},
 		imageCache:        false,
 		imageProxyUrl:     '',
-		pageProxyUrl:      ''
+		pageProxyUrl:      '',
+		pageNsProxyUrl:    '',
+		pageReadProxyUrl:  '',
+		settingsUrl:       ''
 	};
 
 	function readConfig() {
@@ -30,8 +33,13 @@
 		if (!el) return;
 
 		cfg.threePanes        = el.getAttribute('data-three-panes') !== 'false';
-		cfg.defaultReaderMode = el.getAttribute('data-default-reader') === 'full' ? 'full' : 'summary';
+		cfg.defaultReaderMode = el.getAttribute('data-default-reader') || 'summary';
+		if (['summary', 'full', 'full_ns', 'readability'].indexOf(cfg.defaultReaderMode) === -1) cfg.defaultReaderMode = 'summary';
 		cfg.checkFrameUrl     = el.getAttribute('data-check-frame-url') || '';
+		cfg.pageProxyUrl      = el.getAttribute('data-page-proxy-url') || '';
+		cfg.pageNsProxyUrl    = el.getAttribute('data-page-ns-proxy-url') || '';
+		cfg.pageReadProxyUrl  = el.getAttribute('data-page-read-proxy-url') || '';
+		cfg.settingsUrl       = el.getAttribute('data-settings-url') || '';
 
 		try {
 			cfg.feedIdColors = JSON.parse(el.getAttribute('data-feed-id-colors') || '{}');
@@ -228,19 +236,19 @@
 			+ '<button id="cv-btn-next"   class="cv-nav-btn" title="Article suivant" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>'
 			+ '<button id="cv-btn-read"   class="cv-nav-btn" title="Marquer lu / non lu" disabled></button>'
 			+ '<button id="cv-btn-fav"    class="cv-nav-btn" title="Favori" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></button>'
-			+ '<button id="cv-btn-reader" class="cv-nav-btn" title="Afficher l\'article entier" disabled>'
-			+   '<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-			+     '<rect x="4" y="2" width="16" height="20" rx="2"/>'
-			+     '<line x1="8" y1="7" x2="16" y2="7"/>'
-			+     '<line x1="8" y1="11" x2="16" y2="11"/>'
-			+     '<line x1="8" y1="15" x2="12" y2="15"/>'
-			+   '</svg>'
-			+ '</button>'
+			+ '<span class="cv-nav-sep" style="margin: 0 4px; border-left: 1px solid var(--sid-sep); height: 20px;"></span>'
+			+ '<button id="cv-btn-mode-summary" class="cv-nav-btn" title="Résumé (RSS)" style="font-size:12px; padding:0 8px; width:auto;" disabled>RSS</button>'
+			+ '<button id="cv-btn-mode-full"    class="cv-nav-btn" title="Article Entier" style="font-size:12px; padding:0 8px; width:auto;" disabled>Web</button>'
+			+ '<button id="cv-btn-mode-ns"      class="cv-nav-btn" title="Sans Popups" style="font-size:12px; padding:0 8px; width:auto;" disabled>No-script</button>'
+			+ '<button id="cv-btn-mode-read"    class="cv-nav-btn" title="Extraction" style="font-size:12px; padding:0 8px; width:auto;" disabled>Lire</button>'
+			+ '<span class="cv-nav-sep" style="margin: 0 4px; border-left: 1px solid var(--sid-sep); height: 20px;"></span>'
 			+ '<button id="cv-btn-expand" class="cv-nav-btn cv-btn-expand" title="Ouvrir sur le site d\'origine" disabled><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg></button>'
 			+ '<span class="cv-nav-sep"></span>'
 			+ '<button id="cv-btn-zoom-out" class="cv-nav-btn" title="Zoom -"><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>'
 			+ '<button id="cv-btn-zoom-reset" class="cv-nav-btn" title="Zoom 100%"><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></button>'
 			+ '<button id="cv-btn-zoom-in"  class="cv-nav-btn" title="Zoom +"><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg></button>'
+			+ '<span class="cv-nav-sep" style="margin: 0 4px; border-left: 1px solid var(--sid-sep); height: 20px;"></span>'
+			+ '<button id="cv-btn-settings" class="cv-nav-btn" title="Paramètres ViewLG"><svg xmlns="http://www.w3.org/2000/svg" class="icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 0 2-2v-.09a1.65 1.65 0 0 0 1-1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/><path d="M4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9h.09"/></svg></button>'
 			+ '</div>'
 			+ '<div class="flux">' + initialHtml + '</div>'
 			+ '</div>');
@@ -346,7 +354,9 @@
 		// State for the RSS ↔ full-page toggle
 		var _currentRssHtml    = '';
 		var _currentArticleUrl = '';
-		var _isFullMode        = false;
+		var _isFullMode = false;
+		var _currentViewMode = 'summary';
+		var _userPreferredMode = 'summary';
 
 		// ---------------------------------------------------------------
 		// Nav bar – prev / next / expand
@@ -483,11 +493,52 @@
 			}
 		});
 
-		var btnReader   = document.getElementById('cv-btn-reader');
-		var btnExpand   = document.getElementById('cv-btn-expand');
+		var btnModeSummary = document.getElementById('cv-btn-mode-summary');
+		var btnModeFull    = document.getElementById('cv-btn-mode-full');
+		var btnModeNs      = document.getElementById('cv-btn-mode-ns');
+		var btnModeRead    = document.getElementById('cv-btn-mode-read');
+		var btnExpand      = document.getElementById('cv-btn-expand');
 		var btnZoomIn   = document.getElementById('cv-btn-zoom-in');
 		var btnZoomOut  = document.getElementById('cv-btn-zoom-out');
 		var btnZoomReset = document.getElementById('cv-btn-zoom-reset');
+
+		document.getElementById('cv-btn-expand').addEventListener('click', function () {
+			if (_currentArticleUrl) {
+				window.open(_currentArticleUrl, '_blank', 'noopener,noreferrer');
+			}
+		});
+		var btnSettings = document.getElementById('cv-btn-settings');
+		if (btnSettings) {
+			btnSettings.addEventListener('click', function() {
+				if (cfg.settingsUrl) {
+					window.location.href = cfg.settingsUrl;
+				}
+			});
+		}
+		function updateModeButtons() {
+			var disabled = !_currentArticleUrl;
+			if (btnModeSummary) { btnModeSummary.disabled = disabled; btnModeSummary.classList.toggle('cv-nav-btn--active', _currentViewMode === 'summary'); }
+			if (btnModeFull)    { btnModeFull.disabled    = disabled; btnModeFull.classList.toggle('cv-nav-btn--active', _currentViewMode === 'full');    }
+			if (btnModeNs)      { btnModeNs.disabled      = disabled; btnModeNs.classList.toggle('cv-nav-btn--active', _currentViewMode === 'full_ns'); }
+			if (btnModeRead)    { btnModeRead.disabled    = disabled; btnModeRead.classList.toggle('cv-nav-btn--active', _currentViewMode === 'readability'); }
+		}
+
+		function switchMode(mode) {
+			if (mode === _currentViewMode) return;
+			_currentViewMode = mode;
+			_userPreferredMode = mode;
+			updateModeButtons();
+			if (_currentViewMode === 'summary') {
+				panelContent.innerHTML = _currentRssHtml;
+			} else {
+				loadFullMode(_currentArticleUrl, _currentViewMode);
+			}
+		}
+
+		if (btnModeSummary) btnModeSummary.addEventListener('click', function() { switchMode('summary'); });
+		if (btnModeFull)    btnModeFull.addEventListener('click', function() { switchMode('full'); });
+		if (btnModeNs)      btnModeNs.addEventListener('click', function() { switchMode('full_ns'); });
+		if (btnModeRead)    btnModeRead.addEventListener('click', function() { switchMode('readability'); });
 
 		// ---------------------------------------------------------------
 		// Zoom
@@ -520,12 +571,11 @@
 		});
 
 		// Load URL in iframe; auto-fallback to RSS if site blocks iframes
-		function loadFullMode(url) {
+		function loadFullMode(url, mode) {
 			function doFallback() {
-				_isFullMode = false;
+				_currentViewMode = 'summary';
+				updateModeButtons();
 				panelContent.innerHTML = _currentRssHtml;
-				btnReader.classList.remove('cv-nav-btn--active');
-				btnReader.title = 'Afficher l\'article entier';
 				var notice = document.createElement('p');
 				notice.className = 'cv-iframe-blocked';
 				notice.innerHTML = 'Ce site bloque l\'affichage en iframe. '
@@ -533,40 +583,27 @@
 				panelContent.insertBefore(notice, panelContent.firstChild);
 			}
 
-			if (cfg.pageProxyUrl) {
-				// Fetch the proxied HTML via a same-origin XHR, then load it in a
-				// direct iframe pointed at the proxy endpoint.
-				//
-				// Why not srcdoc/blob?
-				//   - blob: URLs are blocked by FreshRSS's CSP "frame-src" (wildcard
-				//     "*" does not cover the blob: scheme in Firefox).
-				//   - srcdoc iframes inherit the parent page's "default-src 'self'"
-				//     CSP, which blocks all cross-origin scripts and resources inside
-				//     the proxied page, making it render poorly.
-				//
-				// Why direct iframe.src = proxyUrl works:
-				//   - The proxy endpoint calls exit() before FreshRSS's
-				//     declareCspHeader() runs, so the response has NO
-				//     Content-Security-Policy and NO X-Frame-Options header.
-				//   - Apache's mod_headers CSP line is commented out in the container.
-				//   - The iframe loads same-origin content with no CSP restrictions,
-				//     so the proxied page's scripts and external resources work freely.
+			var proxyUrl = '';
+			if (mode === 'full') proxyUrl = cfg.pageProxyUrl;
+			if (mode === 'full_ns') proxyUrl = cfg.pageNsProxyUrl;
+			if (mode === 'readability') proxyUrl = cfg.pageReadProxyUrl;
+
+			if (proxyUrl) {
 				panelContent.innerHTML = '<p class="cv-loading">Chargement…</p>';
 				var proxyIframe = document.createElement('iframe');
 				panelContent.innerHTML = '';
 				panelContent.appendChild(proxyIframe);
 				proxyIframe.addEventListener('load', function () {
-					// If the iframe navigated to about:blank the proxy probably failed
 					try {
 						if (proxyIframe.contentWindow.location.href === 'about:blank') doFallback();
 					} catch (e) { /* cross-origin: loaded fine */ }
 				});
 				proxyIframe.addEventListener('error', doFallback);
-				proxyIframe.src = cfg.pageProxyUrl + '&url=' + encodeURIComponent(url);
+				proxyIframe.src = proxyUrl + '&url=' + encodeURIComponent(url);
 				return;
 			}
 
-			// No page proxy: try a direct iframe with an optional X-Frame-Options pre-check
+			// No page proxy: try a direct iframe
 			function doLoad() {
 				var iframe = document.createElement('iframe');
 				panelContent.innerHTML = '';
@@ -586,7 +623,7 @@
 				iframe.src = encodeURI(url);
 			}
 
-			if (cfg.checkFrameUrl) {
+			if (cfg.checkFrameUrl && mode === 'full') {
 				panelContent.innerHTML = '<p class="cv-loading">Vérification…</p>';
 				fetch(cfg.checkFrameUrl + '&url=' + encodeURIComponent(url), { credentials: 'same-origin' })
 					.then(function (r) { return r.json(); })
@@ -600,23 +637,9 @@
 		}
 
 		// Set initial state to reflect the configured default
-		if (cfg.defaultReaderMode === 'full') {
-			btnReader.classList.add('cv-nav-btn--active');
-			btnReader.title = 'Afficher le résumé';
-		}
-		btnReader.addEventListener('click', function () {
-			_isFullMode = !_isFullMode;
-			if (_isFullMode) {
-				loadFullMode(_currentArticleUrl);
-				btnReader.classList.add('cv-nav-btn--active');
-				btnReader.title = 'Afficher le résumé';
-			} else {
-				panelContent.innerHTML = _currentRssHtml;
-				btnReader.classList.remove('cv-nav-btn--active');
-				btnReader.title = 'Afficher l\'article entier';
-			}
-		});
-
+		_userPreferredMode = cfg.defaultReaderMode;
+		_currentViewMode = cfg.defaultReaderMode;
+		
 		// Update button states whenever an article opens
 		document.addEventListener('freshrss:openArticle', updateNavButtons);
 		// Also update when stream changes (new articles loaded or read status changes)
@@ -682,18 +705,14 @@
 			_currentRssHtml    = panelContent.innerHTML;
 			_currentArticleUrl = (articleEl.querySelector('a.item-element.title') || {}).href || '';
 
-			// Apply default reader mode
-			if (cfg.defaultReaderMode === 'full' && _currentArticleUrl) {
-				_isFullMode = true;
-				loadFullMode(_currentArticleUrl);
-				btnReader.classList.add('cv-nav-btn--active');
-				btnReader.title = 'Afficher le résumé';
+			// Apply user preferred reader mode
+			if (_userPreferredMode !== 'summary' && _currentArticleUrl) {
+				_currentViewMode = _userPreferredMode;
+				loadFullMode(_currentArticleUrl, _currentViewMode);
 			} else {
-				_isFullMode = false;
-				btnReader.classList.remove('cv-nav-btn--active');
-				btnReader.title = 'Afficher l\'article entier';
+				_currentViewMode = 'summary';
 			}
-			btnReader.disabled = !_currentArticleUrl;
+			updateModeButtons();
 			if (btnExpand) btnExpand.disabled = !_currentArticleUrl;
 
 			// De-duplicate element IDs to avoid conflicts between panes
