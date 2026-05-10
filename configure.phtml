@@ -113,6 +113,20 @@ $cssVarMeta = [
 			puis en testant les chemins courants (<code>/feed</code>, <code>/rss</code>, etc.).
 			Peut légèrement ralentir l'ajout d'un abonnement.
 		</p>
+
+		<label class="cv-row-label" style="margin-top:.75em" for="cv_image_cache_enabled">
+			<input type="checkbox"
+			       id="cv_image_cache_enabled"
+			       name="cv_image_cache_enabled"
+			       value="1"
+			       <?php echo $this->getUserConfigurationValue('image_cache_enabled', false) ? 'checked="checked"' : ''; ?>>
+			Mettre en cache les images des articles
+		</label>
+		<p class="cv-help">
+			Les images des articles sont téléchargées et mises en cache côté serveur, puis servies
+			via un proxy interne. Améliore la confidentialité (aucune requête vers des serveurs tiers)
+			et permet d'afficher les images même si le site d'origine est indisponible.
+		</p>
 	</section>
 
 	<!-- ================================================================

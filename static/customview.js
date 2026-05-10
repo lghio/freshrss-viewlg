@@ -19,7 +19,10 @@
 		checkFrameUrl:     '',
 		feedIdColors:      {},
 		feedNameColors:    {},
-		uiColors:          {}
+		uiColors:          {},
+		imageCache:        false,
+		imageProxyUrl:     '',
+		pageProxyUrl:      ''
 	};
 
 	function readConfig() {
@@ -47,6 +50,9 @@
 		} catch (e) {
 			cfg.uiColors = {};
 		}
+		cfg.imageCache    = el.getAttribute('data-image-cache') === 'true';
+		cfg.imageProxyUrl = el.getAttribute('data-image-proxy-url') || '';
+		cfg.pageProxyUrl  = el.getAttribute('data-page-proxy-url') || '';
 	}
 
 	/* =========================================================================
@@ -163,6 +169,26 @@
 				}
 			}
 		}).observe(target, { childList: true, subtree: false });
+	}
+
+	/* =========================================================================
+	   IMAGE PROXY / CACHE
+	   ========================================================================= */
+
+	/**
+	 * Rewrites every <img src="https://..."> inside `container` to go through
+	 * the server-side image proxy, which fetches and caches the image on disk.
+	 * Already-proxied URLs are skipped to prevent double-wrapping.
+	 */
+	function rewriteImages(container) {
+		if (!cfg.imageCache || !cfg.imageProxyUrl) return;
+		container.querySelectorAll('img[src]').forEach(function (img) {
+			var src = img.getAttribute('src');
+			if (!src || !/^https?:\/\//i.test(src)) return;
+			// Skip already-proxied URLs
+			if (src.indexOf(cfg.imageProxyUrl) === 0) return;
+			img.setAttribute('src', cfg.imageProxyUrl + '&url=' + encodeURIComponent(src));
+		});
 	}
 
 	/* =========================================================================
@@ -507,6 +533,40 @@
 				panelContent.insertBefore(notice, panelContent.firstChild);
 			}
 
+			if (cfg.pageProxyUrl) {
+				// Fetch the proxied HTML via a same-origin XHR, then load it in a
+				// direct iframe pointed at the proxy endpoint.
+				//
+				// Why not srcdoc/blob?
+				//   - blob: URLs are blocked by FreshRSS's CSP "frame-src" (wildcard
+				//     "*" does not cover the blob: scheme in Firefox).
+				//   - srcdoc iframes inherit the parent page's "default-src 'self'"
+				//     CSP, which blocks all cross-origin scripts and resources inside
+				//     the proxied page, making it render poorly.
+				//
+				// Why direct iframe.src = proxyUrl works:
+				//   - The proxy endpoint calls exit() before FreshRSS's
+				//     declareCspHeader() runs, so the response has NO
+				//     Content-Security-Policy and NO X-Frame-Options header.
+				//   - Apache's mod_headers CSP line is commented out in the container.
+				//   - The iframe loads same-origin content with no CSP restrictions,
+				//     so the proxied page's scripts and external resources work freely.
+				panelContent.innerHTML = '<p class="cv-loading">Chargement…</p>';
+				var proxyIframe = document.createElement('iframe');
+				panelContent.innerHTML = '';
+				panelContent.appendChild(proxyIframe);
+				proxyIframe.addEventListener('load', function () {
+					// If the iframe navigated to about:blank the proxy probably failed
+					try {
+						if (proxyIframe.contentWindow.location.href === 'about:blank') doFallback();
+					} catch (e) { /* cross-origin: loaded fine */ }
+				});
+				proxyIframe.addEventListener('error', doFallback);
+				proxyIframe.src = cfg.pageProxyUrl + '&url=' + encodeURIComponent(url);
+				return;
+			}
+
+			// No page proxy: try a direct iframe with an optional X-Frame-Options pre-check
 			function doLoad() {
 				var iframe = document.createElement('iframe');
 				panelContent.innerHTML = '';
@@ -526,7 +586,6 @@
 				iframe.src = encodeURI(url);
 			}
 
-			// Server-side pre-check: fetch X-Frame-Options / CSP headers via PHP proxy
 			if (cfg.checkFrameUrl) {
 				panelContent.innerHTML = '<p class="cv-loading">Vérification…</p>';
 				fetch(cfg.checkFrameUrl + '&url=' + encodeURIComponent(url), { credentials: 'same-origin' })
@@ -570,6 +629,7 @@
 				_resize();
 			}
 			panelContent.innerHTML = html;
+			rewriteImages(panelContent);
 			if (articleId) {
 				panelContent.setAttribute('id', articleId);
 			}
@@ -692,6 +752,15 @@
 
 		// Re-run color and restructure whenever new articles are inserted into the stream
 		monitorStream(function () { colorizeByName(); restructureArticleHeaders(); });
+
+		// Image cache: rewrite images for non-three-pane article view
+		// (three-pane mode is handled inside setContent)
+		document.querySelectorAll('.flux.current .flux_content').forEach(rewriteImages);
+		document.addEventListener('freshrss:openArticle', function (evt) {
+			if (document.body.classList.contains('cv-three-panes')) return;
+			var content = evt.target.querySelector('.flux_content');
+			if (content) rewriteImages(content);
+		});
 	}
 
 	// Handle both "page already loaded" and "page still loading" cases

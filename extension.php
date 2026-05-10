@@ -213,7 +213,9 @@ final class ViewLGExtension extends Minz_Extension
 					if ($canFrame && preg_match('/^Content-Security-Policy:\s*(.+)$/im', (string)$response, $m)) {
 						if (preg_match('/frame-ancestors\s+([^;]+)/i', $m[1], $fa)) {
 							$ancestors = trim($fa[1]);
-							if (strpos($ancestors, '*') === false) {
+							// Only a bare '*' token means "any origin may frame this page".
+							// A value like '*.substack.com' contains '*' but is NOT a wildcard.
+							if (!preg_match('/(?:^|\s)\*(?:\s|$)/', $ancestors)) {
 								$canFrame = false;
 							}
 						}
@@ -225,6 +227,16 @@ final class ViewLGExtension extends Minz_Extension
 			header('Content-Type: application/json');
 			echo json_encode(['canFrame' => $canFrame]);
 			exit;
+		}
+
+		// AJAX endpoint: image proxy / cache
+		if (Minz_Request::param('cv_action') === 'img') {
+			$this->serveProxiedImage((string) Minz_Request::param('url', ''));
+		}
+
+		// AJAX endpoint: full-page proxy (bypasses X-Frame-Options / CSP)
+		if (Minz_Request::param('cv_action') === 'page') {
+			$this->serveProxiedPage((string) Minz_Request::param('url', ''));
 		}
 
 		// Always load feeds for the settings page
@@ -239,6 +251,9 @@ final class ViewLGExtension extends Minz_Extension
 
 		// Three-pane layout toggle
 		$conf['three_panes_enabled'] = Minz_Request::paramBoolean('cv_three_panes_enabled', false);
+
+		// Image caching toggle
+		$conf['image_cache_enabled'] = Minz_Request::paramBoolean('cv_image_cache_enabled', false);
 
 		// Feed discovery toggle
 		$conf['feed_discovery_enabled'] = Minz_Request::paramBoolean('cv_feed_discovery_enabled', false);
@@ -332,10 +347,15 @@ final class ViewLGExtension extends Minz_Extension
 
 		$threePanesAttr    = $threePanesEnabled ? 'true' : 'false';
 		$defaultReaderAttr = ($defaultReaderMode === 'full') ? 'full' : 'summary';
-		$checkFrameUrl     = Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'check_frame']]);
+		$checkFrameUrl     = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'check_frame']], 'php', true), ENT_QUOTES);
 		$idColorsJson   = htmlspecialchars((string) json_encode($feedIdColors, JSON_THROW_ON_ERROR), ENT_QUOTES);
 		$nameColorsJson = htmlspecialchars((string) json_encode($feedNameColors, JSON_THROW_ON_ERROR), ENT_QUOTES);
 		$uiColorsJson   = htmlspecialchars((string) json_encode($uiColors, JSON_THROW_ON_ERROR), ENT_QUOTES);
+
+		$imageCacheEnabled = (bool) $this->getUserConfigurationValue('image_cache_enabled', false);
+		$imageCacheAttr    = $imageCacheEnabled ? 'true' : 'false';
+		$imageProxyUrl     = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'img']], 'php', true), ENT_QUOTES);
+		$pageProxyUrl      = htmlspecialchars(Minz_Url::display(['c' => 'extension', 'a' => 'configure', 'params' => ['e' => $this->getName(), 'cv_action' => 'page']], 'php', true), ENT_QUOTES);
 
 		return '<div id="cv_config"'
 			. ' data-three-panes="'      . $threePanesAttr    . '"'
@@ -344,6 +364,9 @@ final class ViewLGExtension extends Minz_Extension
 			. ' data-feed-id-colors="'   . $idColorsJson      . '"'
 			. ' data-feed-name-colors="' . $nameColorsJson    . '"'
 			. ' data-ui-colors="'        . $uiColorsJson      . '"'
+			. ' data-image-cache="'      . $imageCacheAttr    . '"'
+			. ' data-image-proxy-url="'  . $imageProxyUrl     . '"'
+			. ' data-page-proxy-url="'   . $pageProxyUrl      . '"'
 			. '></div>';
 	}
 
@@ -530,5 +553,198 @@ final class ViewLGExtension extends Minz_Extension
 	{
 		$vars = $this->getUserConfigurationValue('css_vars', []);
 		return is_array($vars) ? $vars : [];
+	}
+
+	// -------------------------------------------------------------------------
+	// Image proxy / cache
+	// -------------------------------------------------------------------------
+
+	private function getImageCacheDir(): string
+	{
+		$login = '';
+		if (class_exists('Minz_Session', false) && class_exists('FreshRSS_Context', false)) {
+			try {
+				if (FreshRSS_Context::hasUser()) {
+					$login = FreshRSS_Context::user();
+				}
+			} catch (\Throwable $e) {}
+		}
+		$base = defined('DATA_PATH') ? DATA_PATH : sys_get_temp_dir();
+		if ($login !== '') {
+			return $base
+				. DIRECTORY_SEPARATOR . 'users'
+				. DIRECTORY_SEPARATOR . $login
+				. DIRECTORY_SEPARATOR . 'extensions'
+				. DIRECTORY_SEPARATOR . $this->getName()
+				. DIRECTORY_SEPARATOR . 'imgcache';
+		}
+		return sys_get_temp_dir() . DIRECTORY_SEPARATOR . 'freshrss_viewlg_imgcache';
+	}
+
+	private function serveProxiedImage(string $url): void
+	{
+                try {
+                        // Security: validate URL scheme and structure
+                        if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
+                                http_response_code(400);
+                                echo "Bad URL: " . htmlspecialchars($url);
+                                exit;
+                        }
+
+                        $hash     = md5($url);
+                        $cacheDir = $this->getImageCacheDir();
+                        $dataFile = $cacheDir . DIRECTORY_SEPARATOR . $hash . '.data';
+                        $metaFile = $cacheDir . DIRECTORY_SEPARATOR . $hash . '.meta';
+
+                        // Serve from disk cache if available
+                        if (is_file($dataFile) && is_file($metaFile)) {
+                                $mime = trim((string) file_get_contents($metaFile));
+                                header('Content-Type: ' . $mime);
+                                header('Cache-Control: public, max-age=604800');
+                                header('X-Content-Type-Options: nosniff');
+                                readfile($dataFile);
+                                exit;
+                        }
+
+                        // Fetch image from origin.
+                        $parts   = parse_url($url);
+                        $referer = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+                        if (!empty($parts['port'])) {
+                                $referer .= ':' . $parts['port'];
+                        }
+                        $referer .= '/';
+
+                        $ch = curl_init($url);
+                        curl_setopt_array($ch, [
+                                CURLOPT_RETURNTRANSFER => true,
+                                CURLOPT_FOLLOWLOCATION => true,
+                                CURLOPT_MAXREDIRS      => 3,
+                                CURLOPT_TIMEOUT        => 10,
+                                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+                                CURLOPT_REFERER        => $referer,
+                                CURLOPT_SSL_VERIFYPEER => false,
+                        ]);
+                        $data = curl_exec($ch);
+                        $info = curl_getinfo($ch);
+                        curl_close($ch);
+
+                        if ($data === false || (int) ($info['http_code'] ?? 0) >= 400) {
+                                http_response_code(502);
+                                echo "Proxy error: " . ($info['http_code'] ?? 'curl failed');
+                                exit;
+                        }
+
+                        // Extract and validate MIME type – images only
+                        $rawMime = (string) ($info['content_type'] ?? '');
+                        $mime    = strtolower(trim((string) strtok($rawMime, ';')));
+                        $allowed = [
+                                'image/jpeg', 'image/png', 'image/gif', 'image/webp',
+                                'image/avif', 'image/svg+xml', 'image/bmp', 'image/tiff',
+                                'image/x-icon', 'image/vnd.microsoft.icon',
+                        ];
+                        if (!in_array($mime, $allowed, true)) {
+                                http_response_code(403);
+                                echo "Mime not allowed: " . htmlspecialchars($mime);
+                                exit;
+                        }
+
+                        // Persist to disk cache
+                        if (!is_dir($cacheDir)) {
+                                if (!mkdir($cacheDir, 0755, true) && !is_dir($cacheDir)) {
+                                        throw new \RuntimeException(sprintf('Directory "%s" was not created', $cacheDir));
+                                }
+                        }
+                        if (file_put_contents($dataFile, $data) === false) {
+                            throw new \RuntimeException("Failed writing to " . $dataFile);
+                        }
+                        file_put_contents($metaFile, $mime);
+
+                        header('Content-Type: ' . $mime);
+                        header('Cache-Control: public, max-age=604800');
+                        header('X-Content-Type-Options: nosniff');
+                        echo $data;
+                        exit;
+                } catch (\Throwable $e) {
+                        http_response_code(500);
+                        echo "Fatal Exception in serveProxiedImage: " . $e->getMessage() . " on line " . $e->getLine();
+                        exit;
+                }        }
+	private function serveProxiedPage(string $url): void
+	{
+		if (!filter_var($url, FILTER_VALIDATE_URL) || !preg_match('/^https?:\/\//i', $url)) {
+			http_response_code(400);
+			exit;
+		}
+
+		$parts  = parse_url($url);
+		$origin = ($parts['scheme'] ?? 'https') . '://' . ($parts['host'] ?? '');
+		if (!empty($parts['port'])) {
+			$origin .= ':' . $parts['port'];
+		}
+
+		$ch = curl_init($url);
+		curl_setopt_array($ch, [
+			CURLOPT_RETURNTRANSFER => true,
+			CURLOPT_FOLLOWLOCATION => true,
+			CURLOPT_MAXREDIRS      => 5,
+			CURLOPT_TIMEOUT        => 15,
+			CURLOPT_USERAGENT      => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+			CURLOPT_REFERER        => $origin . '/',
+			CURLOPT_ENCODING       => '',   // accept any encoding; curl decodes automatically
+			CURLOPT_SSL_VERIFYPEER => false,
+			CURLOPT_HTTPHEADER     => [
+				'Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+				'Accept-Language: fr,en;q=0.9',
+			],
+		]);
+		$html     = (string) curl_exec($ch);
+		$info     = curl_getinfo($ch);
+		$finalUrl = (string) ($info['url'] ?? $url);
+		curl_close($ch);
+
+		$httpCode = (int) ($info['http_code'] ?? 0);
+		if ($html === '' || $httpCode >= 400) {
+			http_response_code($httpCode ?: 502);
+			exit;
+		}
+
+		// Recompute origin from the final (post-redirect) URL so relative paths resolve correctly
+		$fp          = parse_url($finalUrl);
+		$finalOrigin = ($fp['scheme'] ?? 'https') . '://' . ($fp['host'] ?? '');
+		if (!empty($fp['port'])) {
+			$finalOrigin .= ':' . $fp['port'];
+		}
+
+		// Inject <base href> so all relative URLs resolve against the original site
+		$baseTag = '<base href="' . htmlspecialchars($finalOrigin . '/', ENT_QUOTES) . '">';
+		if (preg_match('/<head(\s[^>]*)?>/', $html)) {
+			$html = preg_replace('/(<head(\s[^>]*)?>)/i', '$1' . $baseTag, $html, 1);
+		} else {
+			$html = $baseTag . $html;
+		}
+
+		// Strip embedded security-policy meta tags.
+		// The regex must match regardless of attribute order inside the tag, so we
+		// use a lookahead that checks for the http-equiv value anywhere in the tag.
+		$cspMetaRe = '/<meta(?=[^>]*http-equiv=["\']Content-Security-Policy["\'])[^>]*>\s*/i';
+		$xfoMetaRe = '/<meta(?=[^>]*http-equiv=["\']X-Frame-Options["\'])[^>]*>\s*/i';
+		$html = preg_replace($cspMetaRe, '', $html);
+		$html = preg_replace($xfoMetaRe, '', $html);
+
+		// Remove any X-Frame-Options / CSP frame-ancestors headers that FreshRSS
+		// (or PHP itself) may have set globally — without this, browsers block the
+		// iframe even though the content is served from the same origin.
+		header_remove('X-Frame-Options');
+		header_remove('Content-Security-Policy');
+		header_remove('X-Content-Security-Policy');
+		header_remove('X-WebKit-CSP');
+
+		// Explicitly send a CSP allowing this page to be framed by the same origin (FreshRSS)
+		header("Content-Security-Policy: default-src * 'unsafe-inline' 'unsafe-eval' data: blob:; frame-ancestors 'self';");
+
+		header('Content-Type: text/html; charset=utf-8');
+		header('Cache-Control: private, no-store');
+		echo $html;
+		exit;
 	}
 }
