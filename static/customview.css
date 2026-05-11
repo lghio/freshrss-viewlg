@@ -73,6 +73,21 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
+		background: var(--sid-bg-dark, rgba(0, 0, 0, 0.05));
+		color: var(--sid-font-color, inherit);
+		border-top: 1px solid var(--sid-sep, rgba(128,128,128, 0.2));
+		padding: 5px;
+	}
+
+	body.cv-three-panes #threepanesviewcontainer .transition a {
+		color: var(--sid-font-color, inherit);
+		opacity: 0.85;
+		text-decoration: none;
+	}
+
+	body.cv-three-panes #threepanesviewcontainer .transition a:hover {
+		opacity: 1;
+		color: var(--main-first, inherit);
 	}
 
 	body.cv-three-panes #threepanesviewcontainer .transition > * {
