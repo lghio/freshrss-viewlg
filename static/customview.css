@@ -459,3 +459,11 @@ body.cv-three-panes #stream .flux .flux_header .cv-meta-row > li.item.link .item
 	padding-top: 0.1rem;
 	padding-bottom: 0.1rem;
 }
+
+	/* FIX: Ensure dropdown-header in tag menus stays readable in _Flat and other themes */
+	body.cv-three-panes .dropdown-menu .dropdown-header {
+		color: inherit !important;
+		font-weight: 700 !important;
+		opacity: 0.8 !important;
+		background: transparent !important;
+	}
