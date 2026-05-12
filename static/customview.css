@@ -471,5 +471,5 @@ body.cv-three-panes #stream .flux .flux_header .cv-meta-row > li.item.link .item
 	/* FIX: RGAA contrast for link items inside dropdown menus (e.g. Mapco theme website links) */
 	body.cv-three-panes .dropdown-menu .item.link.website a,
 	body.cv-three-panes .dropdown-menu .item a {
-		color: inherit !important;
+		color: var(--frss-font-color) !important;
 	}
