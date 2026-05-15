@@ -17,6 +17,23 @@
 	   Theme presets (must match configure.phtml PHP array)
 	   ========================================================================= */
 
+	/* Mapping ui-key → cssVar-key pour dériver les couleurs du panneau liste
+	   depuis les variables CSS du thème quand elles ne sont pas surchargées. */
+	var UI_DERIVE_FROM_CSSVAR = {
+		list_bg:                 'sid-bg',
+		list_text:               'sid-font-color',
+		list_item_hover:         'unread-article-background-color-hover',
+		list_item_hover_text:    'font-color',
+		list_hover_title_bg:     'unread-article-background-color-hover',
+		list_hover_title_text:   'font-color',
+		list_item_selected:      'sid-active',
+		list_item_selected_text: 'sid-active-font',
+		content_bg:              'sid-bg-alt',
+		content_text:            'font-color-grey',
+		border:                  'sid-sep',
+		splitter:                'sid-sep'
+	};
+
 	var CV_THEMES = {
 		light: {
 			ui: {
@@ -36,18 +53,16 @@
 		},
 		dark: {
 			ui: {
-				list_bg:               '#1e2228',
-				list_text:             '#d4d4d4',
-				list_item_hover:       '#2a2f3a',
-				list_item_hover_text:  '#e8e8e8',
-				list_hover_title_bg:   '#2a2f3a',
-				list_hover_title_text: '#ffffff',
-				list_item_selected:    '#1e395a',
-				list_item_selected_text: '#d4d4d4',
-				content_bg:            '#252b35',
-				content_text:          '#d4d4d4',
-				border:                '#3a3f4b',
-				splitter:              '#4a5060'
+				// list_bg = sid-bg, content_bg = sid-bg-alt, border = sid-sep → dérivés
+				list_text:               '#d4d4d4',     // sid-font-color=#c8c8c8 (différent)
+				list_item_hover:         '#2a2f3a',     // hover-bg=#1e2a3a (différent)
+				list_item_hover_text:    '#e8e8e8',     // font-color=#d4d4d4 (différent)
+				list_hover_title_bg:     '#2a2f3a',     // hover-bg=#1e2a3a (différent)
+				list_hover_title_text:   '#ffffff',     // font-color=#d4d4d4 (différent)
+				list_item_selected:      '#1e395a',     // sid-active=#4a7fd4 (différent)
+				list_item_selected_text: '#d4d4d4',     // sid-active-font=#ffffff (différent)
+				content_text:            '#d4d4d4',     // font-color-grey=#888888 (différent)
+				splitter:                '#4a5060'      // sid-sep=#3a3f4b (différent)
 			},
 			cssVars: {
 				'sid-bg':                                    '#1e2228',
@@ -79,18 +94,9 @@
 		},
 		nord: {
 			ui: {
-				list_bg:               '#2e3440',
-				list_text:             '#eceff4',
-				list_item_hover:       '#3b4252',
-				list_item_hover_text:  '#e5e9f0',
-				list_hover_title_bg:   '#3b4252',
-				list_hover_title_text: '#eceff4',
-				list_item_selected:    '#5e81ac',
-				list_item_selected_text: '#eceff4',
-				content_bg:            '#3b4252',
-				content_text:          '#d8dee9',
-				border:                '#4c566a',
-				splitter:              '#4c566a'
+				// Toutes les autres clés sont dérivées de cssVars via UI_DERIVE_FROM_CSSVAR
+				list_item_hover_text:   '#e5e9f0',   // font-color=#eceff4 (légèrement différent)
+				content_bg:             '#3b4252'    // sid-bg-alt=#272c36 (différent)
 			},
 			cssVars: {
 				'sid-bg':                                    '#2e3440',
@@ -122,45 +128,36 @@
 		},
 		lg: {
 			ui: {
-				list_bg:               '#d6d6d9',
-				list_text:             '#111111',
-				list_item_hover:       '#18387b',
-				list_item_hover_text:  '#ffffff',
-				list_hover_title_bg:   '#2b13a4',
-				list_hover_title_text: '#ffffff',
-				list_item_selected:    '#dceeff',
-				list_item_selected_text: '#111111',
-				content_bg:            '#060033',
-				content_text:          '#e0e0e0',
-				border:                '#1a3080',
-				splitter:              '#1e2560'
+				// Toutes les autres clés sont dérivées de cssVars via UI_DERIVE_FROM_CSSVAR
+				list_item_hover_text:   '#e5e9f0',   // font-color=#eceff4 (légèrement différent)
+				content_bg:             '#3b4252'    // sid-bg-alt=#272c36 (différent)
 			},
 			cssVars: {
-				'sid-bg':                                   '#060033',
-				'sid-bg-alt':                               '#0a0840',
-				'sid-bg-dark':                              '#030020',
-				'sid-font-color':                           '#e0e0e0',
-				'sid-sep':                                  '#1a3080',
-				'sid-active':                               '#18387b',
-				'sid-active-font':                          '#ffffff',
-				'main-first':                               '#18387b',
-				'main-first-alt':                           '#0e2861',
-				'main-first-light':                         '#2b4899',
-				'main-first-darker':                        '#030015',
-				'unread-article-background-color':          '#0c1040',
-				'unread-article-background-color-hover':    '#101448',
-				'unread-article-border-color':              '#4060cc',
-				'unread-bg':                                '#0c1040',
-				'unread-font-color':                        '#a0c0ff',
-				'favorite-article-background-color':        '#1a1040',
-				'favorite-article-background-color-hover':  '#1e1448',
-				'favorite-article-border-color':            '#8060cc',
-				'fav-bg':                                   '#8060cc',
-				'font-color':                               '#e0e0e0',
-				'font-color-grey':                          '#a0a0aa',
-				'font-color-link':                          '#84aaff',
-				'font-color-link-hover':                    '#b0cfff',
-				'background-color-grey':                    '#0a0840'
+				'sid-bg':                                   '#2e3440',
+				'sid-bg-alt':                               '#272c36',
+				'sid-bg-dark':                              '#1e2228',
+				'sid-font-color':                           '#eceff4',
+				'sid-sep':                                  '#4c566a',
+				'sid-active':                               '#5e81ac',
+				'sid-active-font':                          '#eceff4',
+				'main-first':                               '#5e81ac',
+				'main-first-alt':                           '#4e71ac',
+				'main-first-light':                         '#e0e8f0',
+				'main-first-darker':                        '#1a2030',
+				'unread-article-background-color':          '#2e3440',
+				'unread-article-background-color-hover':    '#3b4252',
+				'unread-article-border-color':              '#bf616a',
+				'unread-bg':                                '#2e3440',
+				'unread-font-color':                        '#88c8d0',
+				'favorite-article-background-color':        '#3b3440',
+				'favorite-article-background-color-hover':  '#403848',
+				'favorite-article-border-color':            '#cbcb8b',
+				'fav-bg':                                   '#cbcb8b',
+				'font-color':                               '#eceff4',
+				'font-color-grey':                          '#d8dee9',
+				'font-color-link':                          '#88c8d0',
+				'font-color-link-hover':                    '#6fbcbb',
+				'background-color-grey':                    '#2e3440'
 			}
 		}
 	};
@@ -225,20 +222,34 @@
 		var theme = CV_THEMES[themeKey];
 		if (!theme) return;
 
+		var cssVars = theme.cssVars || {};
+
+		// Construire l'ui effectif : dériver depuis cssVars, puis surcharger avec theme.ui explicite
+		var effectiveUi = {};
+		for (var dk in UI_DERIVE_FROM_CSSVAR) {
+			if (!Object.prototype.hasOwnProperty.call(UI_DERIVE_FROM_CSSVAR, dk)) continue;
+			var cvKey = UI_DERIVE_FROM_CSSVAR[dk];
+			if (cssVars[cvKey]) effectiveUi[dk] = cssVars[cvKey];
+		}
+		var explicitUi = theme.ui || {};
+		for (var ek in explicitUi) {
+			if (!Object.prototype.hasOwnProperty.call(explicitUi, ek)) continue;
+			effectiveUi[ek] = explicitUi[ek];
+		}
+
 		// Apply UI panel colors (section 2)
-		var ui = theme.ui || {};
-		for (var key in ui) {
-			if (!Object.prototype.hasOwnProperty.call(ui, key)) continue;
+		for (var key in effectiveUi) {
+			if (!Object.prototype.hasOwnProperty.call(effectiveUi, key)) continue;
 			var cb      = document.getElementById('cv_ui_en_'      + key);
 			var picker  = document.getElementById('cv_ui_color_'   + key);
 			var preview = document.getElementById('cv_ui_preview_' + key);
 			var swatch  = document.getElementById('cv_ui_swatch_'  + key);
 			if (!picker) continue;
 			if (cb) cb.checked = true;
-			picker.value        = ui[key];
-			_tracked[picker.id] = ui[key];
-			setSwatch(swatch, ui[key]);
-			setPreview(preview, true, ui[key]);
+			picker.value        = effectiveUi[key];
+			_tracked[picker.id] = effectiveUi[key];
+			setSwatch(swatch, effectiveUi[key]);
+			setPreview(preview, true, effectiveUi[key]);
 		}
 
 		// Apply CSS variable overrides (section 3)
@@ -248,7 +259,6 @@
 			var k = cb.getAttribute('data-cssvar-key');
 			setPreview(document.getElementById('cv_cv_preview_' + k), false, '');
 		});
-		var cssVars = theme.cssVars || {};
 		for (var vkey in cssVars) {
 			if (!Object.prototype.hasOwnProperty.call(cssVars, vkey)) continue;
 			var vcb      = document.getElementById('cv_cv_en_'      + vkey);
